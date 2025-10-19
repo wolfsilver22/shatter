@@ -662,8 +662,9 @@ class _CustomBottomNavState extends State<CustomBottomNav> {
         appBar: AppBar(
           backgroundColor: _activeColor,
           title: Row(
+            mainAxisAlignment: MainAxisAlignment.start, // محاذاة لليسار
             children: [
-              // الشعار باستخدام الصورة المخصصة
+              // الشعار على اليسار
               Container(
                 width: 40,
                 height: 40,
@@ -702,7 +703,7 @@ class _CustomBottomNavState extends State<CustomBottomNav> {
               ),
               const SizedBox(width: 12),
               Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start, // محاذاة لليسار
                 children: [
                   Text(
                     'تعلم القراءة',
@@ -729,47 +730,49 @@ class _CustomBottomNavState extends State<CustomBottomNav> {
           ),
           centerTitle: false,
           elevation: 0,
-          actions: [
-            // أيقونة المستخدم فقط (فقط إذا كان مسجلاً)
-            if (authService.isLoggedIn)
-              Padding(
-                padding: const EdgeInsets.only(right: 16.0),
-                child: GestureDetector(
-                  onTap: _showUserInfoPopup,
-                  child: Container(
-                    width: 42,
-                    height: 42,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          Colors.white.withOpacity(0.25),
-                          Colors.white.withOpacity(0.15),
-                        ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: Colors.white.withOpacity(0.4),
-                        width: 2,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.15),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
+          // ✅ التعديل: نقل أيقونة المستخدم إلى leading (اليسار)
+          leading: authService.isLoggedIn
+              ? Padding(
+                  padding: const EdgeInsets.only(right: 8.0),
+                  child: GestureDetector(
+                    onTap: _showUserInfoPopup,
+                    child: Container(
+                      width: 36,
+                      height: 36,
+                      margin: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.white.withOpacity(0.25),
+                            Colors.white.withOpacity(0.15),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
                         ),
-                      ],
-                    ),
-                    child: Icon(
-                      Iconsax.profile_circle,
-                      color: Colors.white,
-                      size: 22,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.4),
+                          width: 2,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.15),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        Iconsax.profile_circle,
+                        color: Colors.white,
+                        size: 20,
+                      ),
                     ),
                   ),
-                ),
-              ),
-          ],
+                )
+              : null,
+          // ✅ إزالة الأيقونة من actions لأنها أصبحت في leading
+          actions: const [],
         ),
         body: _pages[_currentIndex],
         bottomNavigationBar: Container(
