@@ -1,605 +1,3 @@
-// import 'package:flutter/material.dart';
-// import 'package:iconsax_flutter/iconsax_flutter.dart';
-// import 'package:mody/screens/Home.dart';
-// import '../screens/ActivitiesScreen.dart';
-// import '../screens/profile_screen.dart';
-//
-//
-// class CustomBottomNav extends StatefulWidget {
-//
-//   CustomBottomNav({super.key });
-//
-//   @override
-//   State<CustomBottomNav> createState() => _CustomBottomNavState();
-// }
-//
-// class _CustomBottomNavState extends State<CustomBottomNav> {
-//   int _currentIndex = 0;
-//   final Color _activeColor = const Color(0xFF6C56F9);
-//   final Color _inactiveColor = Colors.grey;
-//
-//   final List<Widget> _pages = [
-//     const HomeScreen(),
-//     const ActivitiesScreen(),
-//     const ActivitiesScreen(),
-//     const ProfileScreen()
-//     // const MyBookingsScreen(),
-//     //const MyBookingsScreen(),
-//     // ProfilePage(),
-//   ];
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return Directionality(
-//       textDirection: TextDirection.rtl,
-//       child: Scaffold(
-//         body: _pages[_currentIndex],
-//         bottomNavigationBar: Container(
-//           decoration: BoxDecoration(
-//             boxShadow: [
-//               BoxShadow(
-//                 color: Colors.black.withOpacity(0.1),
-//                 blurRadius: 10,
-//                 spreadRadius: 2,
-//               ),
-//             ],
-//           ),
-//           child: ClipRRect(
-//             borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-//             child: BottomNavigationBar(
-//               currentIndex: _currentIndex,
-//               onTap: (index) {
-//                 setState(() => _currentIndex = index);
-//               },
-//               type: BottomNavigationBarType.fixed,
-//               backgroundColor: Colors.white,
-//               selectedItemColor: _activeColor,
-//               unselectedItemColor: _inactiveColor,
-//               selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold),
-//               showSelectedLabels: true,
-//               showUnselectedLabels: true,
-//               elevation: 0,
-//               items: [
-//                 _buildNavItem(
-//                   icon: Iconsax.home,
-//                   activeIcon: Iconsax.home_1,
-//                   label: 'الرئيسية',
-//                   isActive: _currentIndex == 0,
-//                 ),
-//                 _buildNavItem(
-//                   icon: Iconsax.tag,
-//                   activeIcon: Iconsax.tag,
-//                   label: 'العروض',
-//                   isActive: _currentIndex == 1,
-//                 ),
-//                 _buildNavItem(
-//                   icon: Iconsax.calendar,
-//                   activeIcon: Iconsax.calendar,
-//                   label: 'حجوزاتي',
-//                   isActive: _currentIndex == 2,
-//                 ),
-//                 _buildNavItem(
-//                   icon: Iconsax.profile_circle,
-//                   activeIcon: Iconsax.profile_circle,
-//                   label: 'حسابي',
-//                   isActive: _currentIndex == 3,
-//                 ),
-//               ],
-//             ),
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-//
-//   BottomNavigationBarItem _buildNavItem({
-//     required IconData icon,
-//     required IconData activeIcon,
-//     required String label,
-//     required bool isActive,
-//   }) {
-//     return BottomNavigationBarItem(
-//       icon: Container(
-//         padding: const EdgeInsets.all(8),
-//         decoration: BoxDecoration(
-//           color: isActive ? _activeColor.withOpacity(0.1) : Colors.transparent,
-//           borderRadius: BorderRadius.circular(12),
-//         ),
-//         child: Icon(isActive ? activeIcon : icon, size: 24),
-//       ),
-//       activeIcon: Container(
-//         padding: const EdgeInsets.all(8),
-//         decoration: BoxDecoration(
-//           color: _activeColor.withOpacity(0.1),
-//           borderRadius: BorderRadius.circular(12),
-//         ),
-//         child: Icon(activeIcon, size: 24),
-//       ),
-//       label: label,
-//     );
-//   }
-// }
-// import 'package:flutter/material.dart';
-// import 'package:iconsax_flutter/iconsax_flutter.dart';
-// import 'package:mody/screens/Home.dart';
-// import '../screens/ActivitiesScreen.dart';
-// import '../screens/profile_screen.dart';
-//
-// class CustomBottomNav extends StatefulWidget {
-//   CustomBottomNav({super.key});
-//
-//   @override
-//   State<CustomBottomNav> createState() => _CustomBottomNavState();
-// }
-//
-// class _CustomBottomNavState extends State<CustomBottomNav> {
-//   int _currentIndex = 0;
-//
-//   // ✅ الألوان المحدثة المتناسقة مع التصميم
-//   final Color _activeColor = const Color(0xFF1E88E5); // الأزرق الأساسي
-//   final Color _inactiveColor = const Color(0xFF718096); // الرمادي الثانوي
-//   final Color _backgroundColor = const Color(0xFFF5F9FF); // الخلفية الفاتحة
-//   final Color _cardColor = Colors.white; // لون البطاقات
-//
-//   final List<Widget> _pages = [
-//     const HomeScreen(),
-//     const ActivitiesScreen(),
-//     const ActivitiesScreen(),
-//     const ProfileScreen()
-//   ];
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return Directionality(
-//       textDirection: TextDirection.rtl,
-//       child: Scaffold(
-//         backgroundColor: _backgroundColor,
-//         body: _pages[_currentIndex],
-//         bottomNavigationBar: Container(
-//           decoration: BoxDecoration(
-//             color: _cardColor,
-//             boxShadow: [
-//               BoxShadow(
-//                 color: Colors.black.withOpacity(0.1),
-//                 blurRadius: 15,
-//                 spreadRadius: 2,
-//                 offset: const Offset(0, -2),
-//               ),
-//             ],
-//             borderRadius: const BorderRadius.vertical(
-//               top: Radius.circular(20),
-//             ),
-//           ),
-//           child: ClipRRect(
-//             borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-//             child: BottomNavigationBar(
-//               currentIndex: _currentIndex,
-//               onTap: (index) {
-//                 setState(() => _currentIndex = index);
-//               },
-//               type: BottomNavigationBarType.fixed,
-//               backgroundColor: _cardColor,
-//               selectedItemColor: _activeColor,
-//               unselectedItemColor: _inactiveColor,
-//               selectedLabelStyle: TextStyle(
-//                 fontWeight: FontWeight.bold,
-//                 fontSize: 12,
-//                 fontFamily: 'Tajawal',
-//               ),
-//               unselectedLabelStyle: TextStyle(
-//                 fontWeight: FontWeight.normal,
-//                 fontSize: 12,
-//                 fontFamily: 'Tajawal',
-//               ),
-//               showSelectedLabels: true,
-//               showUnselectedLabels: true,
-//               elevation: 0,
-//               items: [
-//                 _buildNavItem(
-//                   icon: Iconsax.home,
-//                   activeIcon: Iconsax.home_1,
-//                   label: 'الرئيسية',
-//                   isActive: _currentIndex == 0,
-//                 ),
-//                 _buildNavItem(
-//                   icon: Iconsax.activity,
-//                   activeIcon: Iconsax.activity,
-//                   label: 'النشاطات',
-//                   isActive: _currentIndex == 1,
-//                 ),
-//                 _buildNavItem(
-//                   icon: Iconsax.calendar,
-//                   activeIcon: Iconsax.calendar_1,
-//                   label: 'التقويم',
-//                   isActive: _currentIndex == 2,
-//                 ),
-//                 _buildNavItem(
-//                   icon: Iconsax.profile_circle,
-//                   activeIcon: Iconsax.profile_circle,
-//                   label: 'حسابي',
-//                   isActive: _currentIndex == 3,
-//                 ),
-//               ],
-//             ),
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-//
-//   BottomNavigationBarItem _buildNavItem({
-//     required IconData icon,
-//     required IconData activeIcon,
-//     required String label,
-//     required bool isActive,
-//   }) {
-//     return BottomNavigationBarItem(
-//       icon: AnimatedContainer(
-//         duration: const Duration(milliseconds: 300),
-//         padding: const EdgeInsets.all(10),
-//         decoration: BoxDecoration(
-//           color: isActive ? _activeColor.withOpacity(0.15) : Colors.transparent,
-//           borderRadius: BorderRadius.circular(14),
-//           border: isActive ? Border.all(
-//             color: _activeColor.withOpacity(0.3),
-//             width: 1,
-//           ) : null,
-//         ),
-//         child: Icon(
-//           isActive ? activeIcon : icon,
-//           size: 24,
-//           color: isActive ? _activeColor : _inactiveColor,
-//         ),
-//       ),
-//       activeIcon: Container(
-//         padding: const EdgeInsets.all(10),
-//         decoration: BoxDecoration(
-//           color: _activeColor.withOpacity(0.15),
-//           borderRadius: BorderRadius.circular(14),
-//           border: Border.all(
-//             color: _activeColor.withOpacity(0.3),
-//             width: 1,
-//           ),
-//         ),
-//         child: Icon(
-//           activeIcon,
-//           size: 24,
-//           color: _activeColor,
-//         ),
-//       ),
-//       label: label,
-//     );
-//   }
-// }
-// import 'package:flutter/material.dart';
-// import 'package:iconsax_flutter/iconsax_flutter.dart';
-// import 'package:provider/provider.dart';
-// import 'package:mody/screens/Home.dart';
-// import '../Auth/auth_service.dart';
-// import '../screens/ActivitiesScreen.dart';
-// import '../screens/profile_screen.dart';
-//
-// class CustomBottomNav extends StatefulWidget {
-//   const CustomBottomNav({super.key});
-//
-//   @override
-//   State<CustomBottomNav> createState() => _CustomBottomNavState();
-// }
-//
-// class _CustomBottomNavState extends State<CustomBottomNav> {
-//   int _currentIndex = 0;
-//
-//   // ✅ الألوان المحدثة المتناسقة مع التصميم
-//   final Color _activeColor = const Color(0xFF1E88E5); // الأزرق الأساسي
-//   final Color _inactiveColor = const Color(0xFF718096); // الرمادي الثانوي
-//   final Color _backgroundColor = const Color(0xFFF5F9FF); // الخلفية الفاتحة
-//   final Color _cardColor = Colors.white; // لون البطاقات
-//   final Color _errorRed = const Color(0xFFEF4444);
-//
-//   final List<Widget> _pages = [
-//     const HomeScreen(),
-//     const ActivitiesScreen(),
-//     const ActivitiesScreen(), // يمكن استبدالها بشاشة التقويم لاحقاً
-//     const ProfileScreen()
-//   ];
-//
-//   void _showLogoutDialog() {
-//     showDialog(
-//       context: context,
-//       barrierColor: Colors.black54,
-//       builder: (context) => Directionality(
-//         textDirection: TextDirection.rtl,
-//         child: Dialog(
-//           shape: RoundedRectangleBorder(
-//             borderRadius: BorderRadius.circular(20),
-//           ),
-//           elevation: 0,
-//           backgroundColor: Colors.transparent,
-//           child: Stack(
-//             children: [
-//               Container(
-//                 padding: const EdgeInsets.all(28),
-//                 margin: const EdgeInsets.only(top: 50),
-//                 decoration: BoxDecoration(
-//                   color: Colors.white,
-//                   borderRadius: BorderRadius.circular(20),
-//                   boxShadow: [
-//                     BoxShadow(
-//                       color: Colors.black.withOpacity(0.25),
-//                       blurRadius: 25,
-//                       offset: const Offset(0, 10),
-//                     ),
-//                   ],
-//                 ),
-//                 child: Column(
-//                   mainAxisSize: MainAxisSize.min,
-//                   children: [
-//                     const SizedBox(height: 50),
-//                     Text(
-//                       'تسجيل الخروج',
-//                       style: TextStyle(
-//                         fontSize: 24,
-//                         fontWeight: FontWeight.bold,
-//                         color: _activeColor,
-//                         fontFamily: 'Tajawal',
-//                       ),
-//                       textAlign: TextAlign.center,
-//                     ),
-//                     const SizedBox(height: 16),
-//                     Text(
-//                       'هل أنت متأكد أنك تريد تسجيل الخروج من حسابك؟',
-//                       textAlign: TextAlign.center,
-//                       style: TextStyle(
-//                         fontSize: 16,
-//                         color: _inactiveColor,
-//                         fontFamily: 'Tajawal',
-//                         height: 1.6,
-//                       ),
-//                     ),
-//                     const SizedBox(height: 28),
-//                     Row(
-//                       children: [
-//                         Expanded(
-//                           child: OutlinedButton(
-//                             onPressed: () => Navigator.pop(context),
-//                             style: OutlinedButton.styleFrom(
-//                               foregroundColor: _inactiveColor,
-//                               side: BorderSide(color: _inactiveColor),
-//                               shape: RoundedRectangleBorder(
-//                                 borderRadius: BorderRadius.circular(14),
-//                               ),
-//                               padding: const EdgeInsets.symmetric(vertical: 16),
-//                             ),
-//                             child: Text(
-//                               'إلغاء',
-//                               style: TextStyle(
-//                                 fontSize: 16,
-//                                 fontWeight: FontWeight.bold,
-//                                 fontFamily: 'Tajawal',
-//                               ),
-//                             ),
-//                           ),
-//                         ),
-//                         const SizedBox(width: 16),
-//                         Expanded(
-//                           child: ElevatedButton(
-//                             onPressed: _performLogout,
-//                             style: ElevatedButton.styleFrom(
-//                               backgroundColor: _errorRed,
-//                               foregroundColor: Colors.white,
-//                               shape: RoundedRectangleBorder(
-//                                 borderRadius: BorderRadius.circular(14),
-//                               ),
-//                               padding: const EdgeInsets.symmetric(vertical: 16),
-//                               elevation: 4,
-//                             ),
-//                             child: Text(
-//                               'تسجيل الخروج',
-//                               style: TextStyle(
-//                                 fontSize: 16,
-//                                 fontWeight: FontWeight.bold,
-//                                 fontFamily: 'Tajawal',
-//                               ),
-//                             ),
-//                           ),
-//                         ),
-//                       ],
-//                     ),
-//                   ],
-//                 ),
-//               ),
-//               Positioned(
-//                 top: 0,
-//                 left: 0,
-//                 right: 0,
-//                 child: Center(
-//                   child: Container(
-//                     width: 80,
-//                     height: 80,
-//                     decoration: BoxDecoration(
-//                       color: _errorRed,
-//                       shape: BoxShape.circle,
-//                       border: Border.all(color: Colors.white, width: 6),
-//                       boxShadow: [
-//                         BoxShadow(
-//                           color: Colors.black.withOpacity(0.2),
-//                           blurRadius: 15,
-//                           spreadRadius: 1,
-//                         ),
-//                       ],
-//                     ),
-//                     child: Icon(Iconsax.logout_1, size: 36, color: Colors.white),
-//                   ),
-//                 ),
-//               ),
-//             ],
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-//
-//   Future<void> _performLogout() async {
-//     Navigator.pop(context); // إغلاق الدايلوج
-//
-//     final authService = Provider.of<AuthService>(context, listen: false);
-//     await authService.logout();
-//
-//     // العودة إلى شاشة تسجيل الدخول
-//     Navigator.pushNamedAndRemoveUntil(
-//         context,
-//         '/login',
-//             (route) => false
-//     );
-//   }
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     final authService = Provider.of<AuthService>(context);
-//
-//     return Directionality(
-//       textDirection: TextDirection.rtl,
-//       child: Scaffold(
-//         backgroundColor: _backgroundColor,
-//         appBar: AppBar(
-//           backgroundColor: _activeColor,
-//           title: Text(
-//             'تعلم القراءة',
-//             style: TextStyle(
-//               fontFamily: 'Tajawal',
-//               fontWeight: FontWeight.bold,
-//               color: Colors.white,
-//               fontSize: 18,
-//             ),
-//           ),
-//           centerTitle: true,
-//           elevation: 0,
-//           actions: [
-//             if (authService.isLoggedIn)
-//               IconButton(
-//                 icon: Icon(Iconsax.logout_1, color: Colors.white),
-//                 onPressed: _showLogoutDialog,
-//                 tooltip: 'تسجيل الخروج',
-//               ),
-//           ],
-//         ),
-//         body: _pages[_currentIndex],
-//         bottomNavigationBar: Container(
-//           decoration: BoxDecoration(
-//             color: _cardColor,
-//             boxShadow: [
-//               BoxShadow(
-//                 color: Colors.black.withOpacity(0.1),
-//                 blurRadius: 15,
-//                 spreadRadius: 2,
-//                 offset: const Offset(0, -2),
-//               ),
-//             ],
-//             borderRadius: const BorderRadius.vertical(
-//               top: Radius.circular(20),
-//             ),
-//           ),
-//           child: ClipRRect(
-//             borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-//             child: BottomNavigationBar(
-//               currentIndex: _currentIndex,
-//               onTap: (index) {
-//                 setState(() => _currentIndex = index);
-//               },
-//               type: BottomNavigationBarType.fixed,
-//               backgroundColor: _cardColor,
-//               selectedItemColor: _activeColor,
-//               unselectedItemColor: _inactiveColor,
-//               selectedLabelStyle: TextStyle(
-//                 fontWeight: FontWeight.bold,
-//                 fontSize: 12,
-//                 fontFamily: 'Tajawal',
-//               ),
-//               unselectedLabelStyle: TextStyle(
-//                 fontWeight: FontWeight.normal,
-//                 fontSize: 12,
-//                 fontFamily: 'Tajawal',
-//               ),
-//               showSelectedLabels: true,
-//               showUnselectedLabels: true,
-//               elevation: 0,
-//               items: [
-//                 _buildNavItem(
-//                   icon: Iconsax.home,
-//                   activeIcon: Iconsax.home_1,
-//                   label: 'الرئيسية',
-//                   isActive: _currentIndex == 0,
-//                 ),
-//                 _buildNavItem(
-//                   icon: Iconsax.activity,
-//                   activeIcon: Iconsax.activity,
-//                   label: 'النشاطات',
-//                   isActive: _currentIndex == 1,
-//                 ),
-//                 _buildNavItem(
-//                   icon: Iconsax.calendar,
-//                   activeIcon: Iconsax.calendar_1,
-//                   label: 'التقويم',
-//                   isActive: _currentIndex == 2,
-//                 ),
-//                 _buildNavItem(
-//                   icon: Iconsax.profile_circle,
-//                   activeIcon: Iconsax.profile_circle,
-//                   label: 'حسابي',
-//                   isActive: _currentIndex == 3,
-//                 ),
-//               ],
-//             ),
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-//
-//   BottomNavigationBarItem _buildNavItem({
-//     required IconData icon,
-//     required IconData activeIcon,
-//     required String label,
-//     required bool isActive,
-//   }) {
-//     return BottomNavigationBarItem(
-//       icon: AnimatedContainer(
-//         duration: const Duration(milliseconds: 300),
-//         padding: const EdgeInsets.all(10),
-//         decoration: BoxDecoration(
-//           color: isActive ? _activeColor.withOpacity(0.15) : Colors.transparent,
-//           borderRadius: BorderRadius.circular(14),
-//           border: isActive ? Border.all(
-//             color: _activeColor.withOpacity(0.3),
-//             width: 1,
-//           ) : null,
-//         ),
-//         child: Icon(
-//           isActive ? activeIcon : icon,
-//           size: 24,
-//           color: isActive ? _activeColor : _inactiveColor,
-//         ),
-//       ),
-//       activeIcon: Container(
-//         padding: const EdgeInsets.all(10),
-//         decoration: BoxDecoration(
-//           color: _activeColor.withOpacity(0.15),
-//           borderRadius: BorderRadius.circular(14),
-//           border: Border.all(
-//             color: _activeColor.withOpacity(0.3),
-//             width: 1,
-//           ),
-//         ),
-//         child: Icon(
-//           activeIcon,
-//           size: 24,
-//           color: _activeColor,
-//         ),
-//       ),
-//       label: label,
-//     );
-//   }
-// }
 import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
@@ -620,15 +18,14 @@ class _MainNavigationState extends State<MainNavigation> {
   int _currentIndex = 0;
   bool _isInitialized = false;
 
-  // ✅ الألوان المحدثة مع التركيز على اللون البرتقالي
-  final Color _activeColor = const Color(0xFFFF6B35);
+  // ✅ الألوان المحدثة المتناسقة مع التصميم
+  final Color _activeColor = const Color(0xFF1E88E5);
   final Color _inactiveColor = const Color(0xFF718096);
-  final Color _backgroundColor = const Color(0xFFF8FAFC);
+  final Color _backgroundColor = const Color(0xFFF5F9FF);
   final Color _cardColor = Colors.white;
   final Color _errorRed = const Color(0xFFEF4444);
   final Color _successGreen = const Color(0xFF10B981);
   final Color _warningOrange = const Color(0xFFFFA726);
-  final Color _orangeAccent = const Color(0xFFFF914D);
 
   // قائمة الصفوف المتاحة
   final List<String> _grades = [
@@ -719,7 +116,7 @@ class _MainNavigationState extends State<MainNavigation> {
                     padding: const EdgeInsets.all(25),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                        colors: [_activeColor, _orangeAccent],
+                        colors: [_activeColor, _activeColor],
                         begin: Alignment.topRight,
                         end: Alignment.bottomLeft,
                       ),
@@ -804,7 +201,7 @@ class _MainNavigationState extends State<MainNavigation> {
                               crossAxisCount: 2,
                               crossAxisSpacing: 15,
                               mainAxisSpacing: 15,
-                              childAspectRatio: 1.6, // تم تعديل النسبة لتحسين المساحة
+                              childAspectRatio: 1.6,
                             ),
                             itemCount: _grades.length,
                             itemBuilder: (context, index) {
@@ -836,23 +233,16 @@ class _MainNavigationState extends State<MainNavigation> {
   }
 
   Widget _buildGradeCard(String grade, int index) {
-    // درجات اللون البرتقالي المتناسقة
-    final List<Color> gradeColors = [
-      Color(0xFFFF6B35),
-      Color(0xFFFF7F4D),
-      Color(0xFFFF9365),
-      Color(0xFFFFA77D),
-      Color(0xFFFFBB95),
-      Color(0xFFFFCFAD),
-    ];
-
+    // اللون البرتقالي الموحد لجميع الكروت
+    final Color primaryOrange = const Color(0xFFFFA726);
+    
     final List<Color> backgroundColors = [
-      Color(0xFFFFF1EB),
-      Color(0xFFFFF3ED),
-      Color(0xFFFFF5EF),
-      Color(0xFFFFF7F1),
-      Color(0xFFFFF9F3),
-      Color(0xFFFFFBF5),
+      Color(0xFFFFF8E1),
+      Color(0xFFFFF8E1),
+      Color(0xFFFFF8E1),
+      Color(0xFFFFF8E1),
+      Color(0xFFFFF8E1),
+      Color(0xFFFFF8E1),
     ];
 
     final List<IconData> gradeIcons = [
@@ -869,22 +259,15 @@ class _MainNavigationState extends State<MainNavigation> {
       child: AnimatedContainer(
         duration: Duration(milliseconds: 300),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              backgroundColors[index],
-              Colors.white,
-            ],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
+          color: backgroundColors[index],
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: gradeColors[index].withOpacity(0.3),
+            color: primaryOrange.withOpacity(0.3),
             width: 2,
           ),
           boxShadow: [
             BoxShadow(
-              color: gradeColors[index].withOpacity(0.15),
+              color: primaryOrange.withOpacity(0.15),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -897,18 +280,11 @@ class _MainNavigationState extends State<MainNavigation> {
               width: 42,
               height: 42,
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    gradeColors[index],
-                    Color.alphaBlend(gradeColors[index].withOpacity(0.8), Colors.white),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
+                color: primaryOrange,
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: gradeColors[index].withOpacity(0.3),
+                    color: primaryOrange.withOpacity(0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 3),
                   ),
@@ -928,7 +304,7 @@ class _MainNavigationState extends State<MainNavigation> {
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
-                  color: gradeColors[index],
+                  color: primaryOrange,
                   fontFamily: 'Tajawal',
                   height: 1.3,
                 ),
@@ -942,14 +318,7 @@ class _MainNavigationState extends State<MainNavigation> {
               height: 3,
               margin: const EdgeInsets.only(top: 6),
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    gradeColors[index],
-                    gradeColors[index].withOpacity(0.7),
-                  ],
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
-                ),
+                color: primaryOrange,
                 borderRadius: const BorderRadius.only(
                   bottomLeft: Radius.circular(12),
                   bottomRight: Radius.circular(12),
@@ -1152,7 +521,7 @@ class _MainNavigationState extends State<MainNavigation> {
                           child: ElevatedButton(
                             onPressed: () {
                               Navigator.pop(context);
-                              _onItemTapped(3); // الانتقال لشاشة الملف الشخصي
+                              _onItemTapped(3);
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: _activeColor,
@@ -1251,7 +620,7 @@ class _MainNavigationState extends State<MainNavigation> {
       case 1:
         return ActivitiesScreen();
       case 2:
-        return ActivitiesScreen(); // يمكن استبدالها بشاشة التقويم
+        return ActivitiesScreen();
       case 3:
         return ProfileScreen();
       default:
@@ -1270,7 +639,7 @@ class _MainNavigationState extends State<MainNavigation> {
         appBar: AppBar(
           backgroundColor: _activeColor,
           title: Row(
-            mainAxisAlignment: MainAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.end,
             children: [
               Container(
                 width: 40,
@@ -1310,7 +679,7 @@ class _MainNavigationState extends State<MainNavigation> {
               ),
               const SizedBox(width: 12),
               Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Text(
                     'تعلم القراءة',
@@ -1335,7 +704,7 @@ class _MainNavigationState extends State<MainNavigation> {
               ),
             ],
           ),
-          centerTitle: false,
+          centerTitle: true,
           elevation: 0,
           leading: authService.isLoggedIn
               ? Padding(
