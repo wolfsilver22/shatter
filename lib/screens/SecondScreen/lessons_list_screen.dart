@@ -1,408 +1,3 @@
-// import 'package:flutter/material.dart';
-// import 'package:flutter_screenutil/flutter_screenutil.dart';
-// import 'package:supabase_flutter/supabase_flutter.dart';
-// import 'lesson_detail_screen.dart';
-//
-// class LessonsListScreen extends StatefulWidget {
-//   @override
-//   _LessonsListScreenState createState() => _LessonsListScreenState();
-// }
-//
-// class _LessonsListScreenState extends State<LessonsListScreen> {
-//   final SupabaseClient supabase = Supabase.instance.client;
-//   List<Map<String, dynamic>> lessons = [];
-//   bool isLoading = false;
-//   String errorMessage = '';
-//
-//   @override
-//   void initState() {
-//     super.initState();
-//     _loadLessonsFromSupabase();
-//   }
-//
-//   Future<void> _loadLessonsFromSupabase() async {
-//     if (!mounted) return;
-//
-//     setState(() {
-//       isLoading = true;
-//       errorMessage = '';
-//     });
-//
-//     try {
-//       final response = await supabase
-//           .from('lessons')
-//           .select()
-//           .order('order_number');
-//
-//       if (response != null && response.isNotEmpty) {
-//         if (mounted) {
-//           setState(() {
-//             lessons = List<Map<String, dynamic>>.from(response);
-//           });
-//         }
-//       } else {
-//         if (mounted) {
-//           setState(() {
-//             errorMessage = 'لا توجد دروس متاحة';
-//           });
-//         }
-//       }
-//     } catch (e) {
-//       if (mounted) {
-//         setState(() {
-//           errorMessage = 'خطأ في تحميل الدروس: $e';
-//         });
-//       }
-//     } finally {
-//       if (mounted) {
-//         setState(() {
-//           isLoading = false;
-//         });
-//       }
-//     }
-//   }
-//
-//   void _navigateToLesson(Map<String, dynamic> lesson) {
-//     Navigator.push(
-//       context,
-//       MaterialPageRoute(
-//         builder: (context) => LessonDetailScreen(lesson: lesson),
-//       ),
-//     );
-//   }
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(
-//         backgroundColor: Color(0xFF1E88E5),
-//         foregroundColor: Colors.white,
-//         title: Text(
-//           'مكتبة الدروس التعليمية',
-//           style: TextStyle(
-//             fontSize: 20.sp,
-//             fontWeight: FontWeight.bold,
-//             fontFamily: 'Tajawal',
-//           ),
-//         ),
-//         centerTitle: true,
-//         actions: [
-//           IconButton(
-//             icon: Icon(Icons.refresh),
-//             onPressed: _loadLessonsFromSupabase,
-//             tooltip: 'تحديث الدروس',
-//           ),
-//         ],
-//       ),
-//       backgroundColor: Color(0xFFE3F2FD),
-//       body: isLoading
-//           ? _buildLoadingWidget()
-//           : errorMessage.isNotEmpty
-//           ? _buildErrorWidget()
-//           : _buildLessonsList(),
-//     );
-//   }
-//
-//   Widget _buildLoadingWidget() {
-//     return Center(
-//       child: Column(
-//         mainAxisAlignment: MainAxisAlignment.center,
-//         children: [
-//           CircularProgressIndicator(color: Color(0xFF1E88E5)),
-//           SizedBox(height: 20.h),
-//           Text(
-//             'جاري تحميل الدروس...',
-//             style: TextStyle(
-//               fontSize: 18.sp,
-//               color: Color(0xFF1E88E5),
-//               fontFamily: 'Tajawal',
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-//
-//   Widget _buildErrorWidget() {
-//     return Center(
-//       child: Column(
-//         mainAxisAlignment: MainAxisAlignment.center,
-//         children: [
-//           Icon(Icons.error_outline, size: 60.sp, color: Colors.red),
-//           SizedBox(height: 16.h),
-//           Text(
-//             errorMessage,
-//             style: TextStyle(
-//               fontSize: 16.sp,
-//               color: Colors.red[700],
-//               fontFamily: 'Tajawal',
-//             ),
-//             textAlign: TextAlign.center,
-//           ),
-//           SizedBox(height: 20.h),
-//           ElevatedButton(
-//             onPressed: _loadLessonsFromSupabase,
-//             child: Text(
-//               'إعادة المحاولة',
-//               style: TextStyle(fontFamily: 'Tajawal'),
-//             ),
-//             style: ElevatedButton.styleFrom(
-//               backgroundColor: Color(0xFF1E88E5),
-//               foregroundColor: Colors.white,
-//               shape: RoundedRectangleBorder(
-//                 borderRadius: BorderRadius.circular(12.w),
-//               ),
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-//
-//   Widget _buildLessonsList() {
-//     return lessons.isEmpty
-//         ? Center(
-//       child: Column(
-//         mainAxisAlignment: MainAxisAlignment.center,
-//         children: [
-//           Icon(Icons.menu_book, size: 80.sp, color: Colors.grey),
-//           SizedBox(height: 16.h),
-//           Text(
-//             'لا توجد دروس متاحة',
-//             style: TextStyle(
-//               fontSize: 18.sp,
-//               color: Colors.grey,
-//               fontFamily: 'Tajawal',
-//             ),
-//           ),
-//         ],
-//       ),
-//     )
-//         : SingleChildScrollView(
-//       physics: const BouncingScrollPhysics(),
-//       padding: EdgeInsets.all(16.w),
-//       child: Column(
-//         children: [
-//           // عنوان القسم
-//           Container(
-//             width: double.infinity,
-//             padding: EdgeInsets.symmetric(vertical: 8.h),
-//             child: Row(
-//               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//               children: [
-//                 Text(
-//                   'جميع الدروس',
-//                   style: TextStyle(
-//                     fontSize: 18.sp,
-//                     fontWeight: FontWeight.bold,
-//                     color: Color(0xFF1E88E5),
-//                     fontFamily: 'Tajawal',
-//                   ),
-//                 ),
-//                 Container(
-//                   padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-//                   decoration: BoxDecoration(
-//                     color: Color(0xFF1E88E5).withOpacity(0.1),
-//                     borderRadius: BorderRadius.circular(12.r),
-//                   ),
-//                   child: Text(
-//                     '${lessons.length} درس',
-//                     style: TextStyle(
-//                       fontSize: 12.sp,
-//                       color: Color(0xFF1E88E5),
-//                       fontWeight: FontWeight.bold,
-//                       fontFamily: 'Tajawal',
-//                     ),
-//                   ),
-//                 ),
-//               ],
-//             ),
-//           ),
-//           SizedBox(height: 16.h),
-//
-//           // قائمة الدروس
-//           Column(
-//             children: lessons.map((lesson) {
-//               return _buildLessonCard(lesson);
-//             }).toList(),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-//
-//   Widget _buildLessonCard(Map<String, dynamic> lesson) {
-//     int orderNumber = lesson['order_number'] ?? 1;
-//     bool hasVideo = lesson['video_url'] != null && lesson['video_url'].isNotEmpty;
-//     String level = lesson['level'] ?? 'مبتدئ';
-//     String description = lesson['description'] ?? '';
-//
-//     return Container(
-//       width: double.infinity,
-//       margin: EdgeInsets.only(bottom: 16.h),
-//       child: Card(
-//         elevation: 4.w,
-//         shape: RoundedRectangleBorder(
-//           borderRadius: BorderRadius.circular(16.w),
-//         ),
-//         child: InkWell(
-//           onTap: () => _navigateToLesson(lesson),
-//           borderRadius: BorderRadius.circular(16.w),
-//           child: Container(
-//             decoration: BoxDecoration(
-//               gradient: LinearGradient(
-//                 begin: Alignment.topLeft,
-//                 end: Alignment.bottomRight,
-//                 colors: [Color(0xFF1E88E5), Color(0xFF1565C0)],
-//               ),
-//               borderRadius: BorderRadius.circular(16.w),
-//             ),
-//             child: Row(
-//               children: [
-//                 // الجزء الأيسر: الأيقونة والمعلومات الأساسية
-//                 Expanded(
-//                   flex: 3,
-//                   child: Padding(
-//                     padding: EdgeInsets.all(16.w),
-//                     child: Column(
-//                       crossAxisAlignment: CrossAxisAlignment.start,
-//                       children: [
-//                         // رقم الدرس والمستوى
-//                         Row(
-//                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//                           children: [
-//                             Container(
-//                               padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
-//                               decoration: BoxDecoration(
-//                                 color: Colors.white.withOpacity(0.2),
-//                                 borderRadius: BorderRadius.circular(12.w),
-//                               ),
-//                               child: Text(
-//                                 'درس $orderNumber',
-//                                 style: TextStyle(
-//                                   color: Colors.white,
-//                                   fontSize: 12.sp,
-//                                   fontWeight: FontWeight.bold,
-//                                   fontFamily: 'Tajawal',
-//                                 ),
-//                               ),
-//                             ),
-//                             Container(
-//                               padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
-//                               decoration: BoxDecoration(
-//                                 color: Color(0xFFFFA726),
-//                                 borderRadius: BorderRadius.circular(12.w),
-//                               ),
-//                               child: Text(
-//                                 level,
-//                                 style: TextStyle(
-//                                   color: Colors.white,
-//                                   fontSize: 12.sp,
-//                                   fontWeight: FontWeight.bold,
-//                                   fontFamily: 'Tajawal',
-//                                 ),
-//                               ),
-//                             ),
-//                           ],
-//                         ),
-//
-//                         SizedBox(height: 12.h),
-//
-//                         // عنوان الدرس
-//                         Text(
-//                           lesson['title'] ?? 'بدون عنوان',
-//                           style: TextStyle(
-//                             color: Colors.white,
-//                             fontSize: 16.sp,
-//                             fontWeight: FontWeight.bold,
-//                             fontFamily: 'Tajawal',
-//                           ),
-//                           maxLines: 2,
-//                           overflow: TextOverflow.ellipsis,
-//                         ),
-//
-//                         SizedBox(height: 8.h),
-//
-//                         // وصف الدرس
-//                         if (description.isNotEmpty)
-//                           Text(
-//                             description,
-//                             style: TextStyle(
-//                               color: Colors.white.withOpacity(0.9),
-//                               fontSize: 12.sp,
-//                               fontFamily: 'Tajawal',
-//                             ),
-//                             maxLines: 2,
-//                             overflow: TextOverflow.ellipsis,
-//                           ),
-//
-//                         SizedBox(height: 12.h),
-//
-//                         // أيقونة الفيديو إذا كان موجوداً
-//                         if (hasVideo)
-//                           Row(
-//                             children: [
-//                               Icon(
-//                                 Icons.play_circle_fill,
-//                                 color: Color(0xFFFFA726),
-//                                 size: 16.sp,
-//                               ),
-//                               SizedBox(width: 6.w),
-//                               Text(
-//                                 'يحتوي على فيديو',
-//                                 style: TextStyle(
-//                                   color: Colors.white.withOpacity(0.9),
-//                                   fontSize: 12.sp,
-//                                   fontFamily: 'Tajawal',
-//                                 ),
-//                               ),
-//                             ],
-//                           ),
-//                       ],
-//                     ),
-//                   ),
-//                 ),
-//
-//                 // الجزء الأيمن: الأيقونة الكبيرة
-//                 Expanded(
-//                   flex: 1,
-//                   child: Container(
-//                     padding: EdgeInsets.all(16.w),
-//                     child: Column(
-//                       mainAxisAlignment: MainAxisAlignment.center,
-//                       children: [
-//                         Container(
-//                           width: 60.w,
-//                           height: 60.h,
-//                           decoration: BoxDecoration(
-//                             color: Colors.white.withOpacity(0.2),
-//                             shape: BoxShape.circle,
-//                           ),
-//                           child: Icon(
-//                             hasVideo ? Icons.video_library : Icons.menu_book,
-//                             color: Colors.white,
-//                             size: 28.sp,
-//                           ),
-//                         ),
-//                         SizedBox(height: 8.h),
-//                         Icon(
-//                           Icons.arrow_back_ios_new,
-//                           color: Colors.white.withOpacity(0.7),
-//                           size: 16.sp,
-//                         ),
-//                       ],
-//                     ),
-//                   ),
-//                 ),
-//               ],
-//             ),
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-// }
-
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -507,7 +102,6 @@ class _LessonsListScreenState extends State<LessonsListScreen> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        // ✅ التعديل: إضافة Scaffold مع body فقط (بدون AppBar)
         body: Container(
           color: Color(0xFFF8FAFC),
           child: isLoading
@@ -516,7 +110,6 @@ class _LessonsListScreenState extends State<LessonsListScreen> {
               ? _buildErrorWidget()
               : _buildContent(),
         ),
-
       ),
     );
   }
@@ -594,13 +187,8 @@ class _LessonsListScreenState extends State<LessonsListScreen> {
   Widget _buildContent() {
     return Column(
       children: [
-        // الرأس المخصص
         _buildCustomHeader(),
-
-        // كارت صورة المادة
         _buildSubjectHeader(),
-
-        // قائمة الدروس
         Expanded(
           child: lessons.isEmpty
               ? _buildEmptyState()
@@ -610,7 +198,6 @@ class _LessonsListScreenState extends State<LessonsListScreen> {
     );
   }
 
-  // ✅ التعديل: إضافة SafeArea للرأس المخصص
   Widget _buildCustomHeader() {
     return SafeArea(
       bottom: false,
@@ -633,7 +220,6 @@ class _LessonsListScreenState extends State<LessonsListScreen> {
         ),
         child: Row(
           children: [
-            // زر العودة
             IconButton(
               onPressed: () => Navigator.of(context).pop(),
               icon: Icon(
@@ -643,7 +229,6 @@ class _LessonsListScreenState extends State<LessonsListScreen> {
               ),
             ),
             SizedBox(width: 12.w),
-            // عنوان المادة
             Expanded(
               child: Text(
                 widget.subjectName,
@@ -683,7 +268,6 @@ class _LessonsListScreenState extends State<LessonsListScreen> {
         borderRadius: BorderRadius.circular(20.w),
         child: Stack(
           children: [
-            // صورة الخلفية
             widget.subjectImageUrl.isNotEmpty
                 ? Image.network(
               widget.subjectImageUrl,
@@ -699,8 +283,6 @@ class _LessonsListScreenState extends State<LessonsListScreen> {
               },
             )
                 : _buildPlaceholderImage(),
-
-            // طبقة تدرج لوني للأعلى للقراءة
             Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
@@ -713,8 +295,6 @@ class _LessonsListScreenState extends State<LessonsListScreen> {
                 ),
               ),
             ),
-
-            // المحتوى النصي - باتجاه اليمين
             Positioned(
               bottom: 16.h,
               right: 16.w,
@@ -805,14 +385,12 @@ class _LessonsListScreenState extends State<LessonsListScreen> {
   Widget _buildLessonsList() {
     return Column(
       children: [
-        // عنوان القسم - باتجاه اليمين
         Container(
           width: double.infinity,
           padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 16.w),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // العداد
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
                 decoration: BoxDecoration(
@@ -829,8 +407,6 @@ class _LessonsListScreenState extends State<LessonsListScreen> {
                   ),
                 ),
               ),
-
-              // العنوان
               Text(
                 'دروس ${widget.subjectName}',
                 style: TextStyle(
@@ -844,8 +420,6 @@ class _LessonsListScreenState extends State<LessonsListScreen> {
           ),
         ),
         SizedBox(height: 8.h),
-
-        // قائمة الدروس
         Expanded(
           child: SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
@@ -938,7 +512,7 @@ class __AnimatedLessonCardState extends State<_AnimatedLessonCard>
           scale: _scaleAnimation.value,
           child: Container(
             width: double.infinity,
-            height: 80.h,
+            height: 100.h, // زيادة الارتفاع قليلاً لتحسين المظهر
             margin: EdgeInsets.only(bottom: 12.h),
             child: Card(
               elevation: _shadowAnimation.value,
@@ -952,31 +526,89 @@ class __AnimatedLessonCardState extends State<_AnimatedLessonCard>
                 splashColor: Color(0xFF1E88E5).withOpacity(0.2),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: Color(0xFF1E88E5), // الخلفية الزرقاء الأساسية
                     borderRadius: BorderRadius.circular(16.w),
                     border: Border.all(
-                      color: Colors.grey.withOpacity(0.2),
+                      color: Color(0xFF1E88E5).withOpacity(0.3),
                       width: 1.w,
                     ),
                   ),
                   child: Row(
                     children: [
-
-                      // صورة الدرس
-                      Container(
-                        width: 80.w,
-                        height: 80.h,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.only(
-                            topLeft: Radius.circular(16.w),
-                            bottomLeft: Radius.circular(16.w),
+                      // الجزء الأيمن: أيقونة التشغيل بالدائرة البرتقالية
+                      Padding(
+                        padding: EdgeInsets.only(left: 16.w, right: 12.w),
+                        child: Container(
+                          width: 44.w,
+                          height: 44.w,
+                          decoration: BoxDecoration(
+                            color: Colors.white, // خلفية بيضاء للدائرة
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 8.w,
+                                offset: Offset(0, 2.h),
+                              ),
+                            ],
+                          ),
+                          child: Center(
+                            child: Container(
+                              width: 36.w,
+                              height: 36.w,
+                              decoration: BoxDecoration(
+                                color: Color(0xFFFFA726), // الدائرة البرتقالية
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.play_arrow,
+                                color: Colors.white, // أيقونة التشغيل باللون الأبيض
+                                size: 20.sp,
+                              ),
+                            ),
                           ),
                         ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.only(
-                            topLeft: Radius.circular(16.w),
-                            bottomLeft: Radius.circular(16.w),
+                      ),
+
+                      // الجزء الأوسط: عنوان الدرس في المنتصف
+                      Expanded(
+                        child: Center(
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 8.w),
+                            child: Text(
+                              widget.lesson['title'] ?? 'بدون عنوان',
+                              style: TextStyle(
+                                color: Colors.white, // النص باللون الأبيض
+                                fontSize: 16.sp,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: 'Tajawal',
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.center,
+                            ),
                           ),
+                        ),
+                      ),
+
+                      // الجزء الأيسر: صورة الدرس أو الأيقونة بخلفية بيضاء
+                      Container(
+                        width: 70.w,
+                        height: 70.w,
+                        margin: EdgeInsets.all(8.w),
+                        decoration: BoxDecoration(
+                          color: Colors.white, // خلفية بيضاء للصورة
+                          borderRadius: BorderRadius.circular(12.w),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 6.w,
+                              offset: Offset(0, 2.h),
+                            ),
+                          ],
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(12.w),
                           child: lessonImage.isNotEmpty
                               ? Image.network(
                             lessonImage,
@@ -994,100 +626,6 @@ class __AnimatedLessonCardState extends State<_AnimatedLessonCard>
                               : _buildLessonPlaceholder(),
                         ),
                       ),
-
-                      // معلومات الدرس
-                      Expanded(
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(vertical: 12.h,horizontal: 12.w),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              // عنوان الدرس
-                              Text(
-                                widget.lesson['title'] ?? 'بدون عنوان',
-                                style: TextStyle(
-                                  color: Color(0xFF1E293B),
-                                  fontSize: 14.sp,
-                                  fontWeight: FontWeight.bold,
-                                  fontFamily: 'Tajawal',
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                textAlign: TextAlign.right,
-                              ),
-
-                              SizedBox(height: 6.h),
-
-                              // رقم الدرس وأيقونة الفيديو
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                children: [
-
-                                  // رقم الدرس
-                                  Container(
-                                    padding: EdgeInsets.symmetric(
-                                        horizontal: 8.w,
-                                        vertical: 2.h
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Color(0xFF1E88E5).withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(6.r),
-                                    ),
-                                    child: Text(
-                                      'درس $orderNumber',
-                                      style: TextStyle(
-                                        color: Color(0xFF1E88E5),
-                                        fontSize: 10.sp,
-                                        fontWeight: FontWeight.bold,
-                                        fontFamily: 'Tajawal',
-                                      ),
-                                    ),
-                                  ),
-                                  SizedBox(width: 8.w),
-                                  // أيقونة الفيديو إذا كان موجوداً
-                                  if (hasVideo)
-                                    Row(
-                                      children: [
-                                        Text(
-                                          'فيديو',
-                                          style: TextStyle(
-                                            color: Color(0xFFFFA726),
-                                            fontSize: 10.sp,
-                                            fontWeight: FontWeight.bold,
-                                            fontFamily: 'Tajawal',
-                                          ),
-                                        ),
-                                        SizedBox(width: 4.w),
-                                        Icon(
-                                          Icons.play_circle_fill,
-                                          color: Color(0xFFFFA726),
-                                          size: 12.sp,
-                                        ),
-                                        SizedBox(width: 8.w),
-                                      ],
-                                    ),
-
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-
-                      // أيقونة السهم
-                      Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 12.w),
-                        child: Transform(
-                          transform: Matrix4.rotationY(3.14159),
-                          child: Icon(
-                            Icons.arrow_forward_ios,
-                            color: Color(0xFF1E88E5),
-                            size: 16.sp,
-                          ),
-                        ),
-                      ),
-                      SizedBox(width: 12.w),
                     ],
                   ),
                 ),
@@ -1101,7 +639,7 @@ class __AnimatedLessonCardState extends State<_AnimatedLessonCard>
 
   Widget _buildLessonPlaceholder() {
     return Container(
-      color: Color(0xFFE3F2FD),
+      color: Colors.grey[100],
       child: Center(
         child: Icon(
           Icons.menu_book,
