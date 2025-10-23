@@ -26,7 +26,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
   bool _isFullScreen = true;
   bool _showControls = true;
   Timer? _controlsTimer;
-
+  
   // ✅ التعديل: إضافة متغيرات لتتبع الحالة السابقة لتقليل عمليات setState
   bool _previousPlayingState = false;
   bool _previousControlsState = true;
@@ -106,14 +106,12 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
 
   // ✅ جديد: تحميل مسبق للفيديو لتحسين استجابة التشغيل الأول
   void _preloadVideo() {
-    // تشغيل الفيديو فوراً عند التحميل بدون انتظار
-    Future.delayed(Duration(milliseconds: 100), () {
-      if (_controller != null && !_isDisposing && mounted) {
-        setState(() {
-          _isPlayerReady = true;
-        });
-      }
-    });
+    // ✅ التعديل: جعل الصفحة جاهزة مباشرة مع استمرار عرض مؤشر التحميل
+    if (_controller != null && !_isDisposing && mounted) {
+      setState(() {
+        _isPlayerReady = true;
+      });
+    }
   }
 
   // ✅ التعديل: listener محسن لتقليل عمليات setState
@@ -121,23 +119,23 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
     if (!mounted || _isDisposing || _controller == null) return;
 
     final currentPlayingState = _controller!.value.isPlaying;
-
+    
     // تحديث حالة التشغيل فقط عند التغيير الفعلي
     if (currentPlayingState != _previousPlayingState) {
       _previousPlayingState = currentPlayingState;
-
+      
       // ✅ التعديل: تحديث سريع للحالة بدون تأخير
       if (mounted) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted && !_isDisposing) {
             setState(() {
               _isPlaying = currentPlayingState;
-
+              
               // ✅ إخفاء دائرة التحميل عند بدء التشغيل
               if (_isPlaying && _showInitialLoader) {
                 _showInitialLoader = false;
               }
-
+              
               // ✅ إخفاء عناصر التحكم بعد بدء التشغيل مباشرة
               if (_isPlaying && _isFirstPlay) {
                 _isFirstPlay = false;
@@ -272,30 +270,30 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
       opacity: _showInitialLoader ? 1.0 : 0.0,
       duration: Duration(milliseconds: 300),
       child: Container(
-        color: Colors.black,
+        color: Colors.transparent, // ✅ تغيير إلى شفاف بدلاً من الأسود
         child: Center(
           child: Container(
-            width: 80.w, // ✅ تصغير الحجم
-            height: 80.w, // ✅ تصغير الحجم
+            width: 80.w,
+            height: 80.w,
             decoration: BoxDecoration(
               color: Colors.white,
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.15), // ✅ ظل أخف
-                  blurRadius: 10.w, // ✅ تصغير الظل
+                  color: Colors.black.withOpacity(0.15),
+                  blurRadius: 10.w,
                   offset: Offset(0, 2.h),
                 ),
               ],
             ),
             child: Center(
               child: SizedBox(
-                width: 32.w, // ✅ تصغير حجم المؤشر
-                height: 32.w, // ✅ تصغير حجم المؤشر
+                width: 32.w,
+                height: 32.w,
                 child: CircularProgressIndicator(
                   strokeWidth: 3.w,
                   valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1E88E5)),
-                  backgroundColor: Colors.grey[100], // ✅ خلفية أفتح
+                  backgroundColor: Colors.grey[100],
                 ),
               ),
             ),
@@ -438,40 +436,41 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
             backgroundColor: Colors.black,
             body: Stack(
               children: [
-                // الفيديو يملأ الشاشة بالكامل
-                Positioned.fill(
-                  child: YoutubePlayer(
-                    controller: _controller!,
-                    showVideoProgressIndicator: false,
-                    progressIndicatorColor: Colors.red,
-                    progressColors: ProgressBarColors(
-                      playedColor: Colors.red,
-                      handleColor: Colors.red,
-                      backgroundColor: Colors.grey[800]!,
+                // الفيديو يملأ الشاشة بالكامل - ✅ الآن يظهر مباشرة
+                if (_isPlayerReady)
+                  Positioned.fill(
+                    child: YoutubePlayer(
+                      controller: _controller!,
+                      showVideoProgressIndicator: false,
+                      progressIndicatorColor: Colors.red,
+                      progressColors: ProgressBarColors(
+                        playedColor: Colors.red,
+                        handleColor: Colors.red,
+                        backgroundColor: Colors.grey[800]!,
+                      ),
+                      onReady: () {
+                        if (mounted && !_isDisposing) {
+                          setState(() {
+                            _isPlayerReady = true;
+                          });
+                        }
+                      },
+                      onEnded: (metaData) {
+                        if (mounted && !_isDisposing) {
+                          setState(() {
+                            _isPlaying = false;
+                            _showControls = true;
+                          });
+                        }
+                      },
                     ),
-                    onReady: () {
-                      if (mounted && !_isDisposing) {
-                        setState(() {
-                          _isPlayerReady = true;
-                        });
-                      }
-                    },
-                    onEnded: (metaData) {
-                      if (mounted && !_isDisposing) {
-                        setState(() {
-                          _isPlaying = false;
-                          _showControls = true;
-                        });
-                      }
-                    },
                   ),
-                ),
 
-                // ✅ جديد: دائرة التحميل الأولية المصغرة
+                // ✅ عناصر التحكم تظهر مباشرة مع استمرار مؤشر التحميل
+                if (_isPlayerReady) _buildYouTubeLikeControls(),
+
+                // ✅ دائرة التحميل الأولية المصغرة - تظهر فوق كل شيء
                 if (_showInitialLoader) _buildInitialLoader(),
-
-                // عناصر التحكم (تظهر وتختفي مثل اليوتيوب)
-                if (_isPlayerReady && !_showInitialLoader) _buildYouTubeLikeControls(),
               ],
             ),
           ),
@@ -579,7 +578,7 @@ class _VideoControlsOverlay extends StatelessWidget {
                       ),
                     ),
                     SizedBox(height: 8.h),
-
+                   
                     // أزرار التحكم
                     Expanded(
                       child: Padding(
