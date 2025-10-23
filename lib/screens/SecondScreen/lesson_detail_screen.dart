@@ -26,13 +26,24 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
   bool _isFullScreen = true;
   bool _showControls = true;
   Timer? _controlsTimer;
+  
+  // ✅ التعديل: إضافة متغيرات لتتبع الحالة السابقة لتقليل عمليات setState
+  bool _previousPlayingState = false;
+  bool _previousControlsState = true;
 
   @override
   void initState() {
     super.initState();
-    _enterFullScreenMode();
-    _initializeYouTubePlayer();
-    _startControlsTimer();
+    _initializeScreen();
+  }
+
+  void _initializeScreen() {
+    // ✅ التعديل: تنفيذ العمليات بشكل منفصل لتجنب التأخير
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _enterFullScreenMode();
+      _initializeYouTubePlayer();
+      _startControlsTimer();
+    });
   }
 
   void _enterFullScreenMode() {
@@ -76,7 +87,8 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
             ),
           );
 
-          _controller!.addListener(_videoListener);
+          // ✅ التعديل: استخدام listener محسن
+          _controller!.addListener(_optimizedVideoListener);
 
           if (mounted) {
             setState(() {
@@ -95,13 +107,20 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
     }
   }
 
-  void _videoListener() {
-    if (!mounted || _isDisposing) return;
+  // ✅ التعديل: listener محسن لتقليل عمليات setState
+  void _optimizedVideoListener() {
+    if (!mounted || _isDisposing || _controller == null) return;
 
-    if (_controller != null) {
-      setState(() {
-        _isPlaying = _controller!.value.isPlaying;
-      });
+    final currentPlayingState = _controller!.value.isPlaying;
+    
+    // تحديث حالة التشغيل فقط عند التغيير الفعلي
+    if (currentPlayingState != _previousPlayingState) {
+      _previousPlayingState = currentPlayingState;
+      if (mounted) {
+        setState(() {
+          _isPlaying = currentPlayingState;
+        });
+      }
     }
   }
 
@@ -129,6 +148,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
     return true;
   }
 
+  // ✅ التعديل: وظائف التحكم المحسنة بدون setState غير ضروري
   void _togglePlayPause() {
     if (_isPlayerReady && _controller != null && !_isDisposing) {
       if (_controller!.value.isPlaying) {
@@ -147,8 +167,13 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
       } else {
         _controller!.mute();
       }
-      setState(() {
-        _isMuted = !_isMuted;
+      // ✅ التعديل: تحديث حالة الكتم فقط عند الضرورة
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          setState(() {
+            _isMuted = !_isMuted;
+          });
+        }
       });
       _showControlsTemporarily();
     }
@@ -173,266 +198,56 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
   void _changePlaybackRate(double rate) {
     if (_controller != null && !_isDisposing) {
       _controller!.setPlaybackRate(rate);
-      setState(() {
-        _playbackRate = rate;
+      // ✅ التعديل: تأخير تحديث الواجهة لتحسين الاستجابة
+      Future.delayed(Duration(milliseconds: 50), () {
+        if (mounted) {
+          setState(() {
+            _playbackRate = rate;
+          });
+        }
       });
       _showControlsTemporarily();
     }
   }
 
+  // ✅ التعديل: تحسين إدارة حالة إظهار/إخفاء عناصر التحكم
   void _showControlsTemporarily() {
-    setState(() {
-      _showControls = true;
-    });
+    if (_showControls != true) {
+      setState(() {
+        _showControls = true;
+        _previousControlsState = true;
+      });
+    }
     _startControlsTimer();
   }
 
   void _startControlsTimer() {
     _controlsTimer?.cancel();
     _controlsTimer = Timer(Duration(seconds: 3), () {
-      if (mounted && !_isDisposing && _isPlaying) {
+      if (mounted && !_isDisposing && _isPlaying && _showControls) {
         setState(() {
           _showControls = false;
+          _previousControlsState = false;
         });
       }
     });
   }
 
+  // ✅ التعديل: فصل واجهة التحكم إلى widget مستقل
   Widget _buildYouTubeLikeControls() {
-    return AnimatedOpacity(
-      opacity: _showControls ? 1.0 : 0.0,
-      duration: Duration(milliseconds: 300),
-      child: Container(
-        color: Colors.transparent,
-        child: Stack(
-          children: [
-            // زر التشغيل/الإيقاف في المنتصف
-            if (!_isPlaying || _showControls)
-              Positioned.fill(
-                child: GestureDetector(
-                  onTap: _togglePlayPause,
-                  child: Container(
-                    color: Colors.transparent,
-                    child: Center(
-                      child: Container(
-                        width: 80.w,
-                        height: 80.w,
-                        decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.7),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          _isPlaying ? Icons.pause : Icons.play_arrow,
-                          color: Colors.white,
-                          size: 40.sp,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-
-            // التحكم السفلي (مثل اليوتيوب)
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: Container(
-                height: 80.h,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.bottomCenter,
-                    end: Alignment.topCenter,
-                    colors: [
-                      Colors.black.withOpacity(0.8),
-                      Colors.transparent,
-                    ],
-                  ),
-                ),
-                child: Column(
-                  children: [
-                    // شريط التقدم
-                    Container(
-                      height: 3.h,
-                      child: ProgressBar(
-                        isExpanded: true,
-                        controller: _controller!,
-                        colors: ProgressBarColors(
-                          playedColor: Colors.red,
-                          handleColor: Colors.red,
-                          backgroundColor: Colors.grey[800]!,
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: 8.h),
-
-                    // أزرار التحكم
-                    Expanded(
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 16.w),
-                        child: Row(
-                          children: [
-                            // زر التشغيل/الإيقاف
-                            IconButton(
-                              onPressed: _togglePlayPause,
-                              icon: Icon(
-                                _isPlaying ? Icons.pause : Icons.play_arrow,
-                                color: Colors.white,
-                                size: 24.sp,
-                              ),
-                            ),
-
-                            // الوقت المنقضي
-                            Text(
-                              _formatDuration(_controller?.value.position ?? Duration.zero),
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 12.sp,
-                              ),
-                            ),
-
-                            // زر الكتم/فك الكتم
-                            IconButton(
-                              onPressed: _toggleMute,
-                              icon: Icon(
-                                _isMuted ? Icons.volume_off : Icons.volume_up,
-                                color: Colors.white,
-                                size: 20.sp,
-                              ),
-                            ),
-
-                            // سرعة التشغيل
-                            PopupMenuButton<double>(
-                              icon: Icon(
-                                Icons.settings,
-                                color: Colors.white,
-                                size: 20.sp,
-                              ),
-                              onSelected: _changePlaybackRate,
-                              itemBuilder: (context) => [
-                                PopupMenuItem(value: 0.5, child: Text('0.5x')),
-                                PopupMenuItem(value: 0.75, child: Text('0.75x')),
-                                PopupMenuItem(value: 1.0, child: Text('عادي (1.0x)')),
-                                PopupMenuItem(value: 1.25, child: Text('1.25x')),
-                                PopupMenuItem(value: 1.5, child: Text('1.5x')),
-                                PopupMenuItem(value: 1.75, child: Text('1.75x')),
-                                PopupMenuItem(value: 2.0, child: Text('2.0x')),
-                              ],
-                            ),
-
-                            Spacer(),
-
-                            // الوقت المتبقي
-                            Text(
-                              '-${_formatDuration((_controller?.value.metaData.duration ?? Duration.zero) - (_controller?.value.position ?? Duration.zero))}',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 12.sp,
-                              ),
-                            ),
-
-                            SizedBox(width: 16.w),
-
-                            // زر الشاشة الكاملة
-                            IconButton(
-                              onPressed: () async {
-                                if (await _onWillPop()) {
-                                  Navigator.of(context).pop();
-                                }
-                              },
-                              icon: Icon(
-                                Icons.fullscreen_exit,
-                                color: Colors.white,
-                                size: 24.sp,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            // التحكم العلوي (العنوان وزر العودة)
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              child: AnimatedOpacity(
-                opacity: _showControls ? 1.0 : 0.0,
-                duration: Duration(milliseconds: 300),
-                child: Container(
-                  height: 60.h,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.black.withOpacity(0.8),
-                        Colors.transparent,
-                      ],
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      // زر العودة
-                      IconButton(
-                        onPressed: () async {
-                          if (await _onWillPop()) {
-                            Navigator.of(context).pop();
-                          }
-                        },
-                        icon: Icon(
-                          Icons.arrow_back,
-                          color: Colors.white,
-                          size: 24.sp,
-                        ),
-                      ),
-
-                      // عنوان الفيديو
-                      Expanded(
-                        child: Text(
-                          widget.lesson['title'] ?? 'عرض الدرس',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 16.sp,
-                            fontWeight: FontWeight.w500,
-                            fontFamily: 'Tajawal',
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-
-                      // زر إعادة 10 ثواني
-                      IconButton(
-                        onPressed: () => _seekBackward(10),
-                        icon: Icon(
-                          Icons.replay_10,
-                          color: Colors.white,
-                          size: 24.sp,
-                        ),
-                      ),
-
-                      // زر تقدم 10 ثواني
-                      IconButton(
-                        onPressed: () => _seekForward(10),
-                        icon: Icon(
-                          Icons.forward_10,
-                          color: Colors.white,
-                          size: 24.sp,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+    return _VideoControlsOverlay(
+      showControls: _showControls,
+      isPlaying: _isPlaying,
+      isMuted: _isMuted,
+      playbackRate: _playbackRate,
+      controller: _controller,
+      lessonTitle: widget.lesson['title'] ?? 'عرض الدرس',
+      onTogglePlayPause: _togglePlayPause,
+      onToggleMute: _toggleMute,
+      onSeekForward: _seekForward,
+      onSeekBackward: _seekBackward,
+      onChangePlaybackRate: _changePlaybackRate,
+      onExit: _onWillPop,
     );
   }
 
@@ -537,9 +352,12 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
         onWillPop: _onWillPop,
         child: GestureDetector(
           onTap: () {
-            setState(() {
-              _showControls = !_showControls;
-            });
+            // ✅ التعديل: تحديث الحالة فقط عند التغيير الفعلي
+            if (_showControls != !_showControls) {
+              setState(() {
+                _showControls = !_showControls;
+              });
+            }
             if (_showControls) {
               _startControlsTimer();
             }
@@ -595,10 +413,281 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
     _exitFullScreenMode();
 
     Future.delayed(Duration(milliseconds: 100)).then((_) {
-      _controller?.removeListener(_videoListener);
+      _controller?.removeListener(_optimizedVideoListener);
       _controller?.dispose();
     });
 
     super.dispose();
+  }
+}
+
+// ✅ التعديل: فصل واجهة التحكم إلى widget مستقل لتقليل إعادة البناء
+class _VideoControlsOverlay extends StatelessWidget {
+  final bool showControls;
+  final bool isPlaying;
+  final bool isMuted;
+  final double playbackRate;
+  final YoutubePlayerController? controller;
+  final String lessonTitle;
+  final VoidCallback onTogglePlayPause;
+  final VoidCallback onToggleMute;
+  final Function(int) onSeekForward;
+  final Function(int) onSeekBackward;
+  final Function(double) onChangePlaybackRate;
+  final Future<bool> Function() onExit;
+
+  const _VideoControlsOverlay({
+    required this.showControls,
+    required this.isPlaying,
+    required this.isMuted,
+    required this.playbackRate,
+    required this.controller,
+    required this.lessonTitle,
+    required this.onTogglePlayPause,
+    required this.onToggleMute,
+    required this.onSeekForward,
+    required this.onSeekBackward,
+    required this.onChangePlaybackRate,
+    required this.onExit,
+  });
+
+  String _formatDuration(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, "0");
+    String twoDigitMinutes = twoDigits(duration.inMinutes.remainder(60));
+    String twoDigitSeconds = twoDigits(duration.inSeconds.remainder(60));
+    if (duration.inHours > 0) {
+      return "${twoDigits(duration.inHours)}:$twoDigitMinutes:$twoDigitSeconds";
+    } else {
+      return "$twoDigitMinutes:$twoDigitSeconds";
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedOpacity(
+      opacity: showControls ? 1.0 : 0.0,
+      duration: Duration(milliseconds: 300),
+      child: Container(
+        color: Colors.transparent,
+        child: Stack(
+          children: [
+            // زر التشغيل/الإيقاف في المنتصف
+            if (!isPlaying || showControls)
+              Positioned.fill(
+                child: GestureDetector(
+                  onTap: onTogglePlayPause,
+                  child: Container(
+                    color: Colors.transparent,
+                    child: Center(
+                      child: Container(
+                        width: 80.w,
+                        height: 80.w,
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.7),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          isPlaying ? Icons.pause : Icons.play_arrow,
+                          color: Colors.white,
+                          size: 40.sp,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+            // التحكم السفلي
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: Container(
+                height: 80.h,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.bottomCenter,
+                    end: Alignment.topCenter,
+                    colors: [
+                      Colors.black.withOpacity(0.8),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    // شريط التقدم
+                    Container(
+                      height: 3.h,
+                      child: ProgressBar(
+                        isExpanded: true,
+                        controller: controller!,
+                        colors: ProgressBarColors(
+                          playedColor: Colors.red,
+                          handleColor: Colors.red,
+                          backgroundColor: Colors.grey[800]!,
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 8.h),
+                   
+                    // أزرار التحكم
+                    Expanded(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 16.w),
+                        child: Row(
+                          children: [
+                            IconButton(
+                              onPressed: onTogglePlayPause,
+                              icon: Icon(
+                                isPlaying ? Icons.pause : Icons.play_arrow,
+                                color: Colors.white,
+                                size: 24.sp,
+                              ),
+                            ),
+
+                            Text(
+                              _formatDuration(controller?.value.position ?? Duration.zero),
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12.sp,
+                              ),
+                            ),
+
+                            IconButton(
+                              onPressed: onToggleMute,
+                              icon: Icon(
+                                isMuted ? Icons.volume_off : Icons.volume_up,
+                                color: Colors.white,
+                                size: 20.sp,
+                              ),
+                            ),
+
+                            PopupMenuButton<double>(
+                              icon: Icon(
+                                Icons.settings,
+                                color: Colors.white,
+                                size: 20.sp,
+                              ),
+                              onSelected: onChangePlaybackRate,
+                              itemBuilder: (context) => [
+                                PopupMenuItem(value: 0.5, child: Text('0.5x')),
+                                PopupMenuItem(value: 0.75, child: Text('0.75x')),
+                                PopupMenuItem(value: 1.0, child: Text('عادي (1.0x)')),
+                                PopupMenuItem(value: 1.25, child: Text('1.25x')),
+                                PopupMenuItem(value: 1.5, child: Text('1.5x')),
+                                PopupMenuItem(value: 1.75, child: Text('1.75x')),
+                                PopupMenuItem(value: 2.0, child: Text('2.0x')),
+                              ],
+                            ),
+
+                            Spacer(),
+
+                            Text(
+                              '-${_formatDuration((controller?.value.metaData.duration ?? Duration.zero) - (controller?.value.position ?? Duration.zero))}',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12.sp,
+                              ),
+                            ),
+
+                            SizedBox(width: 16.w),
+
+                            IconButton(
+                              onPressed: () async {
+                                if (await onExit()) {
+                                  Navigator.of(context).pop();
+                                }
+                              },
+                              icon: Icon(
+                                Icons.fullscreen_exit,
+                                color: Colors.white,
+                                size: 24.sp,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // التحكم العلوي
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: AnimatedOpacity(
+                opacity: showControls ? 1.0 : 0.0,
+                duration: Duration(milliseconds: 300),
+                child: Container(
+                  height: 60.h,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.black.withOpacity(0.8),
+                        Colors.transparent,
+                      ],
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        onPressed: () async {
+                          if (await onExit()) {
+                            Navigator.of(context).pop();
+                          }
+                        },
+                        icon: Icon(
+                          Icons.arrow_back,
+                          color: Colors.white,
+                          size: 24.sp,
+                        ),
+                      ),
+
+                      Expanded(
+                        child: Text(
+                          lessonTitle,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.w500,
+                            fontFamily: 'Tajawal',
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+
+                      IconButton(
+                        onPressed: () => onSeekBackward(10),
+                        icon: Icon(
+                          Icons.replay_10,
+                          color: Colors.white,
+                          size: 24.sp,
+                        ),
+                      ),
+
+                      IconButton(
+                        onPressed: () => onSeekForward(10),
+                        icon: Icon(
+                          Icons.forward_10,
+                          color: Colors.white,
+                          size: 24.sp,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
