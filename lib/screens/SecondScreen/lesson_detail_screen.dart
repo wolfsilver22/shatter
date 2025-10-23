@@ -31,6 +31,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
   bool _previousPlayingState = false;
   bool _previousControlsState = true;
   bool _isFirstPlay = true; // ✅ جديد: لتتبع التشغيل الأول
+  bool _showInitialLoader = true; // ✅ جديد: لعرض دائرة التحميل الأولية
 
   @override
   void initState() {
@@ -131,6 +132,12 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
           if (mounted && !_isDisposing) {
             setState(() {
               _isPlaying = currentPlayingState;
+              
+              // ✅ إخفاء دائرة التحميل عند بدء التشغيل
+              if (_isPlaying && _showInitialLoader) {
+                _showInitialLoader = false;
+              }
+              
               // ✅ إخفاء عناصر التحكم بعد بدء التشغيل مباشرة
               if (_isPlaying && _isFirstPlay) {
                 _isFirstPlay = false;
@@ -155,6 +162,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
         _hasError = true;
         _errorMessage = message;
         _isPlayerReady = false;
+        _showInitialLoader = false; // إخفاء التحميل في حالة الخطأ
       });
     }
   }
@@ -256,6 +264,58 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
         });
       }
     });
+  }
+
+  // ✅ جديد: بناء دائرة التحميل الاحترافية
+  Widget _buildInitialLoader() {
+    return AnimatedOpacity(
+      opacity: _showInitialLoader ? 1.0 : 0.0,
+      duration: Duration(milliseconds: 300),
+      child: Container(
+        color: Colors.black,
+        child: Center(
+          child: Container(
+            width: 120.w,
+            height: 120.w,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 15.w,
+                  offset: Offset(0, 4.h),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                SizedBox(
+                  width: 40.w,
+                  height: 40.w,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 3.w,
+                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1E88E5)),
+                    backgroundColor: Colors.grey[200],
+                  ),
+                ),
+                SizedBox(height: 12.h),
+                Text(
+                  'جاري التحميل',
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    color: Color(0xFF1E88E5),
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'Tajawal',
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   // ✅ التعديل: فصل واجهة التحكم إلى widget مستقل
@@ -420,8 +480,11 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                   ),
                 ),
 
+                // ✅ جديد: دائرة التحميل الأولية
+                if (_showInitialLoader) _buildInitialLoader(),
+
                 // عناصر التحكم (تظهر وتختفي مثل اليوتيوب)
-                if (_isPlayerReady) _buildYouTubeLikeControls(),
+                if (_isPlayerReady && !_showInitialLoader) _buildYouTubeLikeControls(),
               ],
             ),
           ),
@@ -496,9 +559,6 @@ class _VideoControlsOverlay extends StatelessWidget {
         color: Colors.transparent,
         child: Stack(
           children: [
-            // ❌ تم إزالة: زر التشغيل/الإيقاف في المنتصف
-            // لم يعد هناك دائرة تشغيل في منتصف الصفحة
-
             // التحكم السفلي
             Positioned(
               bottom: 0,
