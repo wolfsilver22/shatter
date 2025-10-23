@@ -185,148 +185,139 @@ class _LessonsListScreenState extends State<LessonsListScreen> {
   }
 
   Widget _buildContent() {
-    return Column(
-      children: [
-        _buildCustomHeader(),
-        _buildSubjectHeader(),
-        Expanded(
-          child: lessons.isEmpty
-              ? _buildEmptyState()
-              : _buildLessonsList(),
+    return CustomScrollView(
+      physics: const BouncingScrollPhysics(),
+      slivers: [
+        // ✅ التعديل: استخدام SliverAppBar للرأس الثابت
+        SliverAppBar(
+          backgroundColor: Color(0xFF1E88E5),
+          elevation: 0,
+          pinned: true,
+          expandedHeight: 200.h, // ارتفاع الصورة الممتد
+          flexibleSpace: FlexibleSpaceBar(
+            background: _buildSubjectHeader(),
+            title: Text(
+              widget.subjectName,
+              style: TextStyle(
+                fontSize: 18.sp,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'Tajawal',
+              ),
+            ),
+            centerTitle: true,
+          ),
+          leading: IconButton(
+            onPressed: () => Navigator.of(context).pop(),
+            icon: Icon(
+              Icons.arrow_back,
+              color: Colors.white,
+              size: 24.sp,
+            ),
+          ),
+        ),
+
+        // ✅ التعديل: جعل كامل المحتوى قابل للسكرول
+        SliverToBoxAdapter(
+          child: Container(
+            padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 16.w),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                  decoration: BoxDecoration(
+                    color: Color(0xFF1E88E5).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
+                  child: Text(
+                    '${lessons.length} درس',
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      color: Color(0xFF1E88E5),
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Tajawal',
+                    ),
+                  ),
+                ),
+                Text(
+                  'دروس ${widget.subjectName}',
+                  style: TextStyle(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1E293B),
+                    fontFamily: 'Tajawal',
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        // ✅ التعديل: قائمة الدروس كاملة بالسكرول
+        lessons.isEmpty
+            ? SliverFillRemaining(
+          child: _buildEmptyState(),
+        )
+            : SliverList(
+          delegate: SliverChildBuilderDelegate(
+                (context, index) {
+              return Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                child: _AnimatedLessonCard(
+                  lesson: lessons[index],
+                  onTap: _navigateToLesson,
+                ),
+              );
+            },
+            childCount: lessons.length,
+          ),
         ),
       ],
     );
   }
 
+  // ✅ إزالة الرأس المخصص القديم
   Widget _buildCustomHeader() {
-    return SafeArea(
-      bottom: false,
-      child: Container(
-        width: double.infinity,
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
-        decoration: BoxDecoration(
-          color: Color(0xFF1E88E5),
-          borderRadius: BorderRadius.only(
-            bottomLeft: Radius.circular(20.w),
-            bottomRight: Radius.circular(20.w),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 10.w,
-              offset: Offset(0, 4.h),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            IconButton(
-              onPressed: () => Navigator.of(context).pop(),
-              icon: Icon(
-                Icons.arrow_back,
-                color: Colors.white,
-                size: 24.sp,
-              ),
-            ),
-            SizedBox(width: 12.w),
-            Expanded(
-              child: Text(
-                widget.subjectName,
-                style: TextStyle(
-                  fontSize: 20.sp,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                  fontFamily: 'Tajawal',
-                ),
-                textAlign: TextAlign.right,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+    return Container(); // لم يعد مستخدم
   }
 
   Widget _buildSubjectHeader() {
     return Container(
       width: double.infinity,
-      height: 140.h,
-      margin: EdgeInsets.all(16.w),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20.w),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.15),
-            blurRadius: 15.w,
-            offset: Offset(0, 6.h),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20.w),
-        child: Stack(
-          children: [
-            widget.subjectImageUrl.isNotEmpty
-                ? Image.network(
-              widget.subjectImageUrl,
-              width: double.infinity,
-              height: double.infinity,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                return _buildPlaceholderImage();
-              },
-              loadingBuilder: (context, child, loadingProgress) {
-                if (loadingProgress == null) return child;
-                return _buildImageLoader();
-              },
-            )
-                : _buildPlaceholderImage(),
-            Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.bottomCenter,
-                  end: Alignment.topCenter,
-                  colors: [
-                    Colors.black.withOpacity(0.6),
-                    Colors.transparent,
-                  ],
-                ),
-              ),
-            ),
-            Positioned(
-              bottom: 16.h,
-              right: 16.w,
-              left: 16.w,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    widget.subjectName,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 20.sp,
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'Tajawal',
-                    ),
-                    textAlign: TextAlign.right,
-                  ),
-                  SizedBox(height: 4.h),
-                  Text(
-                    '${lessons.length} درس تعليمي',
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.9),
-                      fontSize: 14.sp,
-                      fontFamily: 'Tajawal',
-                    ),
-                    textAlign: TextAlign.right,
-                  ),
+      height: 200.h,
+      child: Stack(
+        children: [
+          // صورة الخلفية
+          widget.subjectImageUrl.isNotEmpty
+              ? Image.network(
+            widget.subjectImageUrl,
+            width: double.infinity,
+            height: double.infinity,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) {
+              return _buildPlaceholderImage();
+            },
+            loadingBuilder: (context, child, loadingProgress) {
+              if (loadingProgress == null) return child;
+              return _buildImageLoader();
+            },
+          )
+              : _buildPlaceholderImage(),
+
+          // طبقة تدرج لوني
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.bottomCenter,
+                end: Alignment.topCenter,
+                colors: [
+                  Colors.black.withOpacity(0.6),
+                  Colors.transparent,
                 ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -356,85 +347,22 @@ class _LessonsListScreenState extends State<LessonsListScreen> {
   }
 
   Widget _buildEmptyState() {
-    return Column(
-      children: [
-        _buildCustomHeader(),
-        Expanded(
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.menu_book, size: 80.sp, color: Colors.grey),
-                SizedBox(height: 16.h),
-                Text(
-                  'لا توجد دروس متاحة',
-                  style: TextStyle(
-                    fontSize: 18.sp,
-                    color: Colors.grey,
-                    fontFamily: 'Tajawal',
-                  ),
-                ),
-              ],
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.menu_book, size: 80.sp, color: Colors.grey),
+          SizedBox(height: 16.h),
+          Text(
+            'لا توجد دروس متاحة',
+            style: TextStyle(
+              fontSize: 18.sp,
+              color: Colors.grey,
+              fontFamily: 'Tajawal',
             ),
           ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildLessonsList() {
-    return Column(
-      children: [
-        Container(
-          width: double.infinity,
-          padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 16.w),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-                decoration: BoxDecoration(
-                  color: Color(0xFF1E88E5).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12.r),
-                ),
-                child: Text(
-                  '${lessons.length} درس',
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    color: Color(0xFF1E88E5),
-                    fontWeight: FontWeight.bold,
-                    fontFamily: 'Tajawal',
-                  ),
-                ),
-              ),
-              Text(
-                'دروس ${widget.subjectName}',
-                style: TextStyle(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF1E293B),
-                  fontFamily: 'Tajawal',
-                ),
-              ),
-            ],
-          ),
-        ),
-        SizedBox(height: 8.h),
-        Expanded(
-          child: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-            child: Column(
-              children: lessons.map((lesson) {
-                return _AnimatedLessonCard(
-                  lesson: lesson,
-                  onTap: _navigateToLesson,
-                );
-              }).toList(),
-            ),
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -512,8 +440,7 @@ class __AnimatedLessonCardState extends State<_AnimatedLessonCard>
           scale: _scaleAnimation.value,
           child: Container(
             width: double.infinity,
-            height: 100.h, // زيادة الارتفاع قليلاً لتحسين المظهر
-            margin: EdgeInsets.only(bottom: 12.h),
+            height: 100.h,
             child: Card(
               elevation: _shadowAnimation.value,
               shape: RoundedRectangleBorder(
@@ -526,7 +453,7 @@ class __AnimatedLessonCardState extends State<_AnimatedLessonCard>
                 splashColor: Color(0xFF1E88E5).withOpacity(0.2),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Color(0xFF1E88E5), // الخلفية الزرقاء الأساسية
+                    color: Color(0xFF1E88E5),
                     borderRadius: BorderRadius.circular(16.w),
                     border: Border.all(
                       color: Color(0xFF1E88E5).withOpacity(0.3),
@@ -535,69 +462,13 @@ class __AnimatedLessonCardState extends State<_AnimatedLessonCard>
                   ),
                   child: Row(
                     children: [
-                      // الجزء الأيمن: أيقونة التشغيل بالدائرة البرتقالية
-                      Padding(
-                        padding: EdgeInsets.only(left: 16.w, right: 12.w),
-                        child: Container(
-                          width: 44.w,
-                          height: 44.w,
-                          decoration: BoxDecoration(
-                            color: Colors.white, // خلفية بيضاء للدائرة
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
-                                blurRadius: 8.w,
-                                offset: Offset(0, 2.h),
-                              ),
-                            ],
-                          ),
-                          child: Center(
-                            child: Container(
-                              width: 36.w,
-                              height: 36.w,
-                              decoration: BoxDecoration(
-                                color: Color(0xFFFFA726), // الدائرة البرتقالية
-                                shape: BoxShape.circle,
-                              ),
-                              child: Icon(
-                                Icons.play_arrow,
-                                color: Colors.white, // أيقونة التشغيل باللون الأبيض
-                                size: 20.sp,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-
-                      // الجزء الأوسط: عنوان الدرس في المنتصف
-                      Expanded(
-                        child: Center(
-                          child: Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 8.w),
-                            child: Text(
-                              widget.lesson['title'] ?? 'بدون عنوان',
-                              style: TextStyle(
-                                color: Colors.white, // النص باللون الأبيض
-                                fontSize: 16.sp,
-                                fontWeight: FontWeight.bold,
-                                fontFamily: 'Tajawal',
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                        ),
-                      ),
-
-                      // الجزء الأيسر: صورة الدرس أو الأيقونة بخلفية بيضاء
+                      // ✅ التعديل: الجزء الأيمن (من جهة المستخدم) - صورة الدرس
                       Container(
                         width: 70.w,
                         height: 70.w,
-                        margin: EdgeInsets.all(8.w),
+                        margin: EdgeInsets.all(12.w),
                         decoration: BoxDecoration(
-                          color: Colors.white, // خلفية بيضاء للصورة
+                          color: Colors.white,
                           borderRadius: BorderRadius.circular(12.w),
                           boxShadow: [
                             BoxShadow(
@@ -624,6 +495,62 @@ class __AnimatedLessonCardState extends State<_AnimatedLessonCard>
                             },
                           )
                               : _buildLessonPlaceholder(),
+                        ),
+                      ),
+
+                      // ✅ التعديل: الجزء الأوسط - عنوان الدرس
+                      Expanded(
+                        child: Center(
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 8.w),
+                            child: Text(
+                              widget.lesson['title'] ?? 'بدون عنوان',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16.sp,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: 'Tajawal',
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      // ✅ التعديل: الجزء الأيسر (من جهة التطبيق) - أيقونة التشغيل
+                      Padding(
+                        padding: EdgeInsets.only(right: 16.w, left: 12.w),
+                        child: Container(
+                          width: 44.w,
+                          height: 44.w,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 8.w,
+                                offset: Offset(0, 2.h),
+                              ),
+                            ],
+                          ),
+                          child: Center(
+                            child: Container(
+                              width: 36.w,
+                              height: 36.w,
+                              decoration: BoxDecoration(
+                                color: Color(0xFFFFA726),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.play_arrow,
+                                color: Colors.white,
+                                size: 20.sp,
+                              ),
+                            ),
+                          ),
                         ),
                       ),
                     ],
