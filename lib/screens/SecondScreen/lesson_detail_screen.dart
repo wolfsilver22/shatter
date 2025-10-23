@@ -26,7 +26,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
   bool _isFullScreen = true;
   bool _showControls = true;
   Timer? _controlsTimer;
-  
+
   // ✅ التعديل: إضافة متغيرات لتتبع الحالة السابقة لتقليل عمليات setState
   bool _previousPlayingState = false;
   bool _previousControlsState = true;
@@ -121,23 +121,23 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
     if (!mounted || _isDisposing || _controller == null) return;
 
     final currentPlayingState = _controller!.value.isPlaying;
-    
+
     // تحديث حالة التشغيل فقط عند التغيير الفعلي
     if (currentPlayingState != _previousPlayingState) {
       _previousPlayingState = currentPlayingState;
-      
+
       // ✅ التعديل: تحديث سريع للحالة بدون تأخير
       if (mounted) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted && !_isDisposing) {
             setState(() {
               _isPlaying = currentPlayingState;
-              
+
               // ✅ إخفاء دائرة التحميل عند بدء التشغيل
               if (_isPlaying && _showInitialLoader) {
                 _showInitialLoader = false;
               }
-              
+
               // ✅ إخفاء عناصر التحكم بعد بدء التشغيل مباشرة
               if (_isPlaying && _isFirstPlay) {
                 _isFirstPlay = false;
@@ -266,7 +266,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
     });
   }
 
-  // ✅ جديد: بناء دائرة التحميل الاحترافية
+  // ✅ جديد: بناء دائرة التحميل الاحترافية المصغرة
   Widget _buildInitialLoader() {
     return AnimatedOpacity(
       opacity: _showInitialLoader ? 1.0 : 0.0,
@@ -275,42 +275,29 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
         color: Colors.black,
         child: Center(
           child: Container(
-            width: 120.w,
-            height: 120.w,
+            width: 80.w, // ✅ تصغير الحجم
+            height: 80.w, // ✅ تصغير الحجم
             decoration: BoxDecoration(
               color: Colors.white,
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.2),
-                  blurRadius: 15.w,
-                  offset: Offset(0, 4.h),
+                  color: Colors.black.withOpacity(0.15), // ✅ ظل أخف
+                  blurRadius: 10.w, // ✅ تصغير الظل
+                  offset: Offset(0, 2.h),
                 ),
               ],
             ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                SizedBox(
-                  width: 40.w,
-                  height: 40.w,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 3.w,
-                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1E88E5)),
-                    backgroundColor: Colors.grey[200],
-                  ),
+            child: Center(
+              child: SizedBox(
+                width: 32.w, // ✅ تصغير حجم المؤشر
+                height: 32.w, // ✅ تصغير حجم المؤشر
+                child: CircularProgressIndicator(
+                  strokeWidth: 3.w,
+                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1E88E5)),
+                  backgroundColor: Colors.grey[100], // ✅ خلفية أفتح
                 ),
-                SizedBox(height: 12.h),
-                Text(
-                  'جاري التحميل',
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    color: Color(0xFF1E88E5),
-                    fontWeight: FontWeight.bold,
-                    fontFamily: 'Tajawal',
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ),
@@ -480,7 +467,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                   ),
                 ),
 
-                // ✅ جديد: دائرة التحميل الأولية
+                // ✅ جديد: دائرة التحميل الأولية المصغرة
                 if (_showInitialLoader) _buildInitialLoader(),
 
                 // عناصر التحكم (تظهر وتختفي مثل اليوتيوب)
@@ -592,7 +579,7 @@ class _VideoControlsOverlay extends StatelessWidget {
                       ),
                     ),
                     SizedBox(height: 8.h),
-                   
+
                     // أزرار التحكم
                     Expanded(
                       child: Padding(
