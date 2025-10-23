@@ -30,6 +30,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
   // ✅ التعديل: إضافة متغيرات لتتبع الحالة السابقة لتقليل عمليات setState
   bool _previousPlayingState = false;
   bool _previousControlsState = true;
+  bool _isFirstPlay = true; // ✅ جديد: لتتبع التشغيل الأول
 
   @override
   void initState() {
@@ -38,12 +39,10 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
   }
 
   void _initializeScreen() {
-    // ✅ التعديل: تنفيذ العمليات بشكل منفصل لتجنب التأخير
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _enterFullScreenMode();
-      _initializeYouTubePlayer();
-      _startControlsTimer();
-    });
+    // ✅ التعديل: تنفيذ العمليات بشكل متوازي لتحسين السرعة
+    _enterFullScreenMode();
+    _initializeYouTubePlayer();
+    _startControlsTimer();
   }
 
   void _enterFullScreenMode() {
@@ -90,11 +89,8 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
           // ✅ التعديل: استخدام listener محسن
           _controller!.addListener(_optimizedVideoListener);
 
-          if (mounted) {
-            setState(() {
-              _isPlayerReady = true;
-            });
-          }
+          // ✅ التعديل: تحسين استجابة التشغيل الأول
+          _preloadVideo();
 
         } else {
           _setErrorState('رابط الفيديو غير صالح');
@@ -107,6 +103,18 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
     }
   }
 
+  // ✅ جديد: تحميل مسبق للفيديو لتحسين استجابة التشغيل الأول
+  void _preloadVideo() {
+    // تشغيل الفيديو فوراً عند التحميل بدون انتظار
+    Future.delayed(Duration(milliseconds: 100), () {
+      if (_controller != null && !_isDisposing && mounted) {
+        setState(() {
+          _isPlayerReady = true;
+        });
+      }
+    });
+  }
+
   // ✅ التعديل: listener محسن لتقليل عمليات setState
   void _optimizedVideoListener() {
     if (!mounted || _isDisposing || _controller == null) return;
@@ -116,9 +124,26 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
     // تحديث حالة التشغيل فقط عند التغيير الفعلي
     if (currentPlayingState != _previousPlayingState) {
       _previousPlayingState = currentPlayingState;
+      
+      // ✅ التعديل: تحديث سريع للحالة بدون تأخير
       if (mounted) {
-        setState(() {
-          _isPlaying = currentPlayingState;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted && !_isDisposing) {
+            setState(() {
+              _isPlaying = currentPlayingState;
+              // ✅ إخفاء عناصر التحكم بعد بدء التشغيل مباشرة
+              if (_isPlaying && _isFirstPlay) {
+                _isFirstPlay = false;
+                Future.delayed(Duration(seconds: 2), () {
+                  if (mounted && !_isDisposing) {
+                    setState(() {
+                      _showControls = false;
+                    });
+                  }
+                });
+              }
+            });
+          }
         });
       }
     }
@@ -144,7 +169,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
   Future<bool> _onWillPop() async {
     _exitFullScreenMode();
     _stopVideoBeforeExit();
-    await Future.delayed(Duration(milliseconds: 200));
+    await Future.delayed(Duration(milliseconds: 100));
     return true;
   }
 
@@ -471,31 +496,8 @@ class _VideoControlsOverlay extends StatelessWidget {
         color: Colors.transparent,
         child: Stack(
           children: [
-            // زر التشغيل/الإيقاف في المنتصف
-            if (!isPlaying || showControls)
-              Positioned.fill(
-                child: GestureDetector(
-                  onTap: onTogglePlayPause,
-                  child: Container(
-                    color: Colors.transparent,
-                    child: Center(
-                      child: Container(
-                        width: 80.w,
-                        height: 80.w,
-                        decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.7),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          isPlaying ? Icons.pause : Icons.play_arrow,
-                          color: Colors.white,
-                          size: 40.sp,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
+            // ❌ تم إزالة: زر التشغيل/الإيقاف في المنتصف
+            // لم يعد هناك دائرة تشغيل في منتصف الصفحة
 
             // التحكم السفلي
             Positioned(
