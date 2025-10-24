@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
@@ -104,30 +105,20 @@ class _IntroScreenState extends State<IntroScreen> {
                   // العنوان مع خلفية شفافة
                   Container(
                     padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.9),
-                      borderRadius: BorderRadius.circular(20.w),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 20.w,
-                          offset: Offset(0, 10.h),
-                        ),
-                      ],
-                    ),
+
                     child: Column(
                       children: [
                         Text(
                           'أبدأ رحلتك نحو التفوق الان',
                           style: TextStyle(
-                            fontSize: 28.sp,
+                            fontSize: 18.sp,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF1E88E5),
+                            color: Colors.white,
                             fontFamily: 'Tajawal',
                           ),
                           textAlign: TextAlign.center,
                         ),
-                        
+
                       ],
                     ),
                   ),
@@ -350,8 +341,8 @@ class _IntroScreenState extends State<IntroScreen> {
       child: ElevatedButton(
         onPressed: () => _navigateToLogin(context),
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.white,
-          foregroundColor: Color(0xFF1E88E5),
+          backgroundColor: const Color(0xFFFFA726),
+          foregroundColor: Colors.black,
           padding: EdgeInsets.symmetric(vertical: 18.h),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16.w),
