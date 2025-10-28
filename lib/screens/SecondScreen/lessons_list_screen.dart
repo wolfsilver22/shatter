@@ -213,6 +213,7 @@ class _LessonsListScreenState extends State<LessonsListScreen> {
           elevation: 0,
           pinned: true,
           expandedHeight: 200.h,
+          leading: Container(), // ✅ هذا السطر سيخفي السهم الثاني
           flexibleSpace: FlexibleSpaceBar(
             background: _buildSubjectHeader(),
             // ✅ تم إزالة title لإزالة السهم السفلي
