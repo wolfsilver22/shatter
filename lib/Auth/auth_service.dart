@@ -148,12 +148,18 @@ class AuthService with ChangeNotifier {
 
       // تسجيل الدخول باستخدام Firebase Auth
       final userCredential = await _auth.signInWithEmailAndPassword(
-        email: email,
+        email: email.trim(),
         password: password,
       );
 
+      final user = userCredential.user;
+
+      if (user == null) {
+        throw Exception('فشل تسجيل الدخول - لم يتم إرجاع مستخدم');
+      }
+
       // التحقق من أن البريد الإلكتروني مفعل
-      if (!userCredential.user!.emailVerified) {
+      if (!user.emailVerified) {
         await _auth.signOut();
         throw Exception('يرجى تفعيل البريد الإلكتروني أولاً');
       }
@@ -191,6 +197,8 @@ class AuthService with ChangeNotifier {
       await _saveAuthState();
       notifyListeners();
 
+      return;
+
     } on FirebaseAuthException catch (e) {
       String errorMessage = 'حدث خطأ في تسجيل الدخول';
 
@@ -213,12 +221,20 @@ class AuthService with ChangeNotifier {
         case 'network-request-failed':
           errorMessage = 'مشكلة في الاتصال بالإنترنت';
           break;
+        case 'operation-not-allowed':
+          errorMessage = 'طريقة التسجيل غير مسموحة';
+          break;
+        case 'invalid-credential':
+          errorMessage = 'بيانات الدخول غير صالحة';
+          break;
         default:
           errorMessage = 'حدث خطأ غير متوقع: ${e.message}';
       }
 
+      print('🔥 خطأ في تسجيل الدخول: ${e.code} - ${e.message}');
       throw Exception(errorMessage);
     } catch (e) {
+      print('🔥 خطأ غير متوقع في تسجيل الدخول: $e');
       rethrow;
     }
   }
