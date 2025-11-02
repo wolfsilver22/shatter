@@ -30,6 +30,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
   double _playbackRate = 1.0;
   bool _isFullScreen = false;
   bool _isLoading = true;
+  bool _isVideoLoading = true;
   Duration _currentPosition = Duration.zero;
   Duration _totalDuration = Duration.zero;
 
@@ -76,8 +77,8 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
               autoPlay: true, // التشغيل التلقائي
               mute: false,
               enableCaption: false, // تعطيل الترجمة
-              hideControls: false,
-              controlsVisibleAtStart: true,
+              hideControls: true, // إخفاء عناصر التحكم الافتراضية
+              controlsVisibleAtStart: false,
               useHybridComposition: true,
               disableDragSeek: false,
               loop: false,
@@ -94,16 +95,22 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
               setState(() {
                 _currentPosition = _controller!.value.position;
                 _totalDuration = _controller!.metadata.duration;
+
+                // إخفاء مؤشر التحميل عندما يبدأ الفيديو
+                if (_controller!.value.isPlaying && _isVideoLoading) {
+                  setState(() {
+                    _isVideoLoading = false;
+                  });
+                }
               });
             }
           });
 
-          // إخفاء مؤشر التحميل بعد تهيئة المشغل
+          // إخفاء مؤشر التحميل الرئيسي بعد تهيئة المشغل
           Future.delayed(const Duration(milliseconds: 500), () {
             if (mounted) {
               setState(() {
                 _isLoading = false;
-                _isPlayerReady = true;
               });
             }
           });
@@ -136,6 +143,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
         _errorMessage = message;
         _isPlayerReady = false;
         _isLoading = false;
+        _isVideoLoading = false;
       });
     }
   }
@@ -261,6 +269,79 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
     );
   }
 
+  Widget _buildLoadingSpinner() {
+    return Center(
+      child: Container(
+        width: 120.w,
+        height: 120.w,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: 15.w,
+              spreadRadius: 2.w,
+            ),
+          ],
+        ),
+        child: Stack(
+          children: [
+            // دائرة التقدم الدائرية
+            CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(const Color(0xFF1E88E5)),
+              strokeWidth: 4.w,
+              backgroundColor: Colors.grey[200],
+            ),
+            // أيقونة مركزية
+            Center(
+              child: Icon(
+                Icons.play_arrow_rounded,
+                color: const Color(0xFF1E88E5),
+                size: 40.sp,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildVideoLoadingOverlay() {
+    return AnimatedOpacity(
+      opacity: _isVideoLoading ? 1.0 : 0.0,
+      duration: const Duration(milliseconds: 300),
+      child: Container(
+        color: Colors.black.withOpacity(0.7),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _buildLoadingSpinner(),
+              SizedBox(height: 20.h),
+              Text(
+                'جاري تحميل الفيديو...',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 8.h),
+              Text(
+                'يرجى الانتظار حتى بدء التشغيل',
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: 14.sp,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildFullScreenControls() {
     return Stack(
       children: [
@@ -269,98 +350,106 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
           top: 0,
           left: 0,
           right: 0,
-          child: Container(
-            height: 60.h,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Colors.black.withOpacity(0.7),
-                  Colors.transparent,
+          child: AnimatedOpacity(
+            opacity: _isVideoLoading ? 0.0 : 1.0,
+            duration: const Duration(milliseconds: 300),
+            child: Container(
+              height: 60.h,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withOpacity(0.7),
+                    Colors.transparent,
+                  ],
+                ),
+              ),
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: Icon(Icons.arrow_back, color: Colors.white, size: 24.sp),
+                    onPressed: () {
+                      _exitFullScreen();
+                      Navigator.pop(context);
+                    },
+                  ),
+                  Expanded(
+                    child: Text(
+                      widget.lesson['lesson_title'] ?? 'عرض الدرس',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.fullscreen_exit, color: Colors.white, size: 24.sp),
+                    onPressed: _exitFullScreen,
+                  ),
                 ],
               ),
-            ),
-            child: Row(
-              children: [
-                IconButton(
-                  icon: Icon(Icons.arrow_back, color: Colors.white, size: 24.sp),
-                  onPressed: () {
-                    _exitFullScreen();
-                    Navigator.pop(context);
-                  },
-                ),
-                Expanded(
-                  child: Text(
-                    widget.lesson['lesson_title'] ?? 'عرض الدرس',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                IconButton(
-                  icon: Icon(Icons.fullscreen_exit, color: Colors.white, size: 24.sp),
-                  onPressed: _exitFullScreen,
-                ),
-              ],
             ),
           ),
         ),
 
         // عناصر التحكم المركزية
         Positioned.fill(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              // زر الرجوع 10 ثواني
-              GestureDetector(
-                onTap: () => _seekBackward(10),
-                child: Container(
-                  width: 80.w,
-                  color: Colors.transparent,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.replay_10, color: Colors.white, size: 40.sp),
-                      Text('10', style: TextStyle(color: Colors.white, fontSize: 12.sp)),
-                    ],
+          child: AnimatedOpacity(
+            opacity: _isVideoLoading ? 0.0 : 1.0,
+            duration: const Duration(milliseconds: 300),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // زر الرجوع 10 ثواني
+                GestureDetector(
+                  onTap: () => _seekBackward(10),
+                  child: Container(
+                    width: 80.w,
+                    color: Colors.transparent,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.replay_10, color: Colors.white, size: 40.sp),
+                        Text('10', style: TextStyle(color: Colors.white, fontSize: 12.sp)),
+                      ],
+                    ),
                   ),
                 ),
-              ),
 
-              // زر التشغيل/الإيقاف
-              GestureDetector(
-                onTap: _togglePlayPause,
-                child: Container(
-                  width: 80.w,
-                  color: Colors.transparent,
-                  child: Icon(
-                    _isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled,
-                    color: Colors.white,
-                    size: 60.sp,
+                // زر التشغيل/الإيقاف
+                GestureDetector(
+                  onTap: _togglePlayPause,
+                  child: Container(
+                    width: 80.w,
+                    color: Colors.transparent,
+                    child: Icon(
+                      _isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled,
+                      color: Colors.white,
+                      size: 60.sp,
+                    ),
                   ),
                 ),
-              ),
 
-              // زر التقدم 10 ثواني
-              GestureDetector(
-                onTap: () => _seekForward(10),
-                child: Container(
-                  width: 80.w,
-                  color: Colors.transparent,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.forward_10, color: Colors.white, size: 40.sp),
-                      Text('10', style: TextStyle(color: Colors.white, fontSize: 12.sp)),
-                    ],
+                // زر التقدم 10 ثواني
+                GestureDetector(
+                  onTap: () => _seekForward(10),
+                  child: Container(
+                    width: 80.w,
+                    color: Colors.transparent,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.forward_10, color: Colors.white, size: 40.sp),
+                        Text('10', style: TextStyle(color: Colors.white, fontSize: 12.sp)),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
 
@@ -369,119 +458,99 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
           bottom: 0,
           left: 0,
           right: 0,
-          child: Container(
-            height: 100.h,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.bottomCenter,
-                end: Alignment.topCenter,
-                colors: [
-                  Colors.black.withOpacity(0.7),
-                  Colors.transparent,
+          child: AnimatedOpacity(
+            opacity: _isVideoLoading ? 0.0 : 1.0,
+            duration: const Duration(milliseconds: 300),
+            child: Container(
+              height: 100.h,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.bottomCenter,
+                  end: Alignment.topCenter,
+                  colors: [
+                    Colors.black.withOpacity(0.7),
+                    Colors.transparent,
+                  ],
+                ),
+              ),
+              child: Column(
+                children: [
+                  // شريط التقدم المخصص
+                  _buildCustomProgressBar(),
+
+                  // عناصر التحكم السفلية
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                    child: Row(
+                      children: [
+                        // زر الصوت
+                        Row(
+                          children: [
+                            IconButton(
+                              icon: Icon(
+                                _isMuted ? Icons.volume_off : Icons.volume_up,
+                                color: Colors.white,
+                                size: 20.sp,
+                              ),
+                              onPressed: _toggleMute,
+                            ),
+                            SizedBox(width: 8.w),
+                            SizedBox(
+                              width: 80.w,
+                              child: Slider(
+                                value: _volume,
+                                min: 0,
+                                max: 100,
+                                onChanged: _changeVolume,
+                                onChangeEnd: _onVolumeChangeEnd,
+                                activeColor: Colors.white,
+                                inactiveColor: Colors.white54,
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const Spacer(),
+
+                        // زر سرعة التشغيل
+                        PopupMenuButton<double>(
+                          icon: Icon(Icons.speed, color: Colors.white, size: 20.sp),
+                          onSelected: _changePlaybackRate,
+                          itemBuilder: (context) => [
+                            PopupMenuItem(value: 0.25, child: Text('0.25x')),
+                            PopupMenuItem(value: 0.5, child: Text('0.5x')),
+                            PopupMenuItem(value: 0.75, child: Text('0.75x')),
+                            PopupMenuItem(value: 1.0, child: Text('عادي (1.0x)')),
+                            PopupMenuItem(value: 1.25, child: Text('1.25x')),
+                            PopupMenuItem(value: 1.5, child: Text('1.5x')),
+                            PopupMenuItem(value: 1.75, child: Text('1.75x')),
+                            PopupMenuItem(value: 2.0, child: Text('2.0x')),
+                          ],
+                        ),
+
+                        // زر الإعدادات (مع تعطيل الترجمة)
+                        PopupMenuButton<String>(
+                          icon: Icon(Icons.more_vert, color: Colors.white, size: 20.sp),
+                          onSelected: (value) {
+                            if (value == 'quality') {
+                              // يمكن إضافة اختيار الجودة هنا
+                            }
+                          },
+                          itemBuilder: (context) => [
+                            const PopupMenuItem(value: 'quality', child: Text('جودة الفيديو')),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
-            ),
-            child: Column(
-              children: [
-                // شريط التقدم المخصص
-                _buildCustomProgressBar(),
-
-                // عناصر التحكم السفلية
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-                  child: Row(
-                    children: [
-                      // زر الصوت
-                      Row(
-                        children: [
-                          IconButton(
-                            icon: Icon(
-                              _isMuted ? Icons.volume_off : Icons.volume_up,
-                              color: Colors.white,
-                              size: 20.sp,
-                            ),
-                            onPressed: _toggleMute,
-                          ),
-                          SizedBox(width: 8.w),
-                          SizedBox(
-                            width: 80.w,
-                            child: Slider(
-                              value: _volume,
-                              min: 0,
-                              max: 100,
-                              onChanged: _changeVolume,
-                              onChangeEnd: _onVolumeChangeEnd,
-                              activeColor: Colors.white,
-                              inactiveColor: Colors.white54,
-                            ),
-                          ),
-                        ],
-                      ),
-
-                      const Spacer(),
-
-                      // زر سرعة التشغيل
-                      PopupMenuButton<double>(
-                        icon: Icon(Icons.speed, color: Colors.white, size: 20.sp),
-                        onSelected: _changePlaybackRate,
-                        itemBuilder: (context) => [
-                          PopupMenuItem(value: 0.25, child: Text('0.25x')),
-                          PopupMenuItem(value: 0.5, child: Text('0.5x')),
-                          PopupMenuItem(value: 0.75, child: Text('0.75x')),
-                          PopupMenuItem(value: 1.0, child: Text('عادي (1.0x)')),
-                          PopupMenuItem(value: 1.25, child: Text('1.25x')),
-                          PopupMenuItem(value: 1.5, child: Text('1.5x')),
-                          PopupMenuItem(value: 1.75, child: Text('1.75x')),
-                          PopupMenuItem(value: 2.0, child: Text('2.0x')),
-                        ],
-                      ),
-
-                      // زر الإعدادات (مع تعطيل الترجمة)
-                      PopupMenuButton<String>(
-                        icon: Icon(Icons.more_vert, color: Colors.white, size: 20.sp),
-                        onSelected: (value) {
-                          if (value == 'quality') {
-                            // يمكن إضافة اختيار الجودة هنا
-                          }
-                        },
-                        itemBuilder: (context) => [
-                          const PopupMenuItem(value: 'quality', child: Text('جودة الفيديو')),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ],
             ),
           ),
         ),
 
-        // مؤشر التحميل
-        if (_isLoading)
-          Positioned.fill(
-            child: Container(
-              color: Colors.black,
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    CircularProgressIndicator(
-                      color: const Color(0xFF1E88E5),
-                      strokeWidth: 3.w,
-                    ),
-                    SizedBox(height: 16.h),
-                    Text(
-                      'جاري تحميل الفيديو...',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16.sp,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
+        // مؤشر تحميل الفيديو
+        if (_isVideoLoading) _buildVideoLoadingOverlay(),
       ],
     );
   }
@@ -540,8 +609,8 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              CircularProgressIndicator(color: const Color(0xFF1E88E5)),
-              SizedBox(height: 16.h),
+              _buildLoadingSpinner(),
+              SizedBox(height: 20.h),
               Text(
                 'جاري تهيئة مشغل الفيديو...',
                 style: TextStyle(
@@ -569,7 +638,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
             Positioned.fill(
               child: YoutubePlayer(
                 controller: _controller!,
-                showVideoProgressIndicator: false, // إخفاء شريط التقدم الافتراضي
+                showVideoProgressIndicator: true,
                 progressIndicatorColor: const Color(0xFF1E88E5),
                 progressColors: const ProgressBarColors(
                   playedColor: Color(0xFF1E88E5),
@@ -585,14 +654,23 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                   // العودة إلى البداية عند انتهاء الفيديو
                   _controller!.seekTo(Duration.zero);
                   _controller!.pause();
+                  setState(() {
+                    _isPlaying = false;
+                  });
                 },
+                bottomActions: [
+                  CurrentPosition(),
+                  ProgressBar(isExpanded: true),
+                  RemainingDuration(),
+                  FullScreenButton(),
+                ],
               ),
             ),
 
             // عناصر التحكم المخصصة
             if (_isPlayerReady) _buildFullScreenControls(),
 
-            // مؤشر التحميل
+            // مؤشر التحميل الرئيسي
             if (_isLoading)
               Positioned.fill(
                 child: Container(
@@ -601,13 +679,10 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        CircularProgressIndicator(
-                          color: const Color(0xFF1E88E5),
-                          strokeWidth: 3.w,
-                        ),
-                        SizedBox(height: 16.h),
+                        _buildLoadingSpinner(),
+                        SizedBox(height: 20.h),
                         Text(
-                          'جاري تحميل الفيديو...',
+                          'جاري تحميل المشغل...',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 16.sp,
