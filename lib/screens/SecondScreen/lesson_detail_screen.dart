@@ -1,3 +1,2015 @@
+// // import 'package:flutter/material.dart';
+// // import 'package:flutter/services.dart';
+// // import 'package:flutter_screenutil/flutter_screenutil.dart';
+// // import 'package:youtube_player_flutter/youtube_player_flutter.dart';
+// //
+// // class LessonDetailScreen extends StatefulWidget {
+// //   final Map<String, dynamic> lesson;
+// //
+// //   const LessonDetailScreen({Key? key, required this.lesson}) : super(key: key);
+// //
+// //   @override
+// //   _LessonDetailScreenState createState() => _LessonDetailScreenState();
+// // }
+// //
+// // class _LessonDetailScreenState extends State<LessonDetailScreen> {
+// //   YoutubePlayerController? _controller;
+// //   bool _isPlayerReady = false;
+// //   bool _hasError = false;
+// //   String _errorMessage = '';
+// //   bool _isMuted = false;
+// //   double _volume = 100;
+// //   bool _isPlaying = false;
+// //   double _playbackRate = 1.0;
+// //
+// //   @override
+// //   void initState() {
+// //     super.initState();
+// //     _initializeYouTubePlayer();
+// //     SystemChrome.setPreferredOrientations([
+// //       DeviceOrientation.portraitUp,
+// //     ]);
+// //   }
+// //
+// //   void _initializeYouTubePlayer() {
+// //     try {
+// //       String? videoUrl = widget.lesson['video_url'] ?? 'https://youtu.be/UB1O30fR-EE';
+// //
+// //       if (videoUrl != null && videoUrl.isNotEmpty) {
+// //         String? videoId = YoutubePlayer.convertUrlToId(videoUrl);
+// //
+// //         if (videoId != null) {
+// //           _controller = YoutubePlayerController(
+// //             initialVideoId: videoId,
+// //             flags: YoutubePlayerFlags(
+// //               autoPlay: false,
+// //               mute: false,
+// //               enableCaption: true,
+// //               captionLanguage: 'ar',
+// //               hideControls: false,
+// //               controlsVisibleAtStart: true,
+// //               useHybridComposition: true,
+// //               disableDragSeek: false,
+// //               loop: false,
+// //               isLive: false,
+// //               forceHD: true,
+// //             ),
+// //           );
+// //
+// //           _controller!.addListener(_videoListener);
+// //
+// //           if (mounted) {
+// //             setState(() {
+// //               _isPlayerReady = true;
+// //             });
+// //           }
+// //
+// //         } else {
+// //           _setErrorState('رابط الفيديو غير صالح');
+// //         }
+// //       } else {
+// //         _setErrorState('لا يتوفر فيديو لهذا الدرس');
+// //       }
+// //     } catch (e) {
+// //       _setErrorState('خطأ في تهيئة مشغل الفيديو: $e');
+// //     }
+// //   }
+// //
+// //   void _videoListener() {
+// //     if (!mounted) return;
+// //
+// //     if (_controller != null) {
+// //       setState(() {
+// //         _isPlaying = _controller!.value.isPlaying;
+// //       });
+// //     }
+// //   }
+// //
+// //   void _setErrorState(String message) {
+// //     if (mounted) {
+// //       setState(() {
+// //         _hasError = true;
+// //         _errorMessage = message;
+// //         _isPlayerReady = false;
+// //       });
+// //     }
+// //   }
+// //
+// //   void _togglePlayPause() {
+// //     if (_isPlayerReady && _controller != null) {
+// //       if (_controller!.value.isPlaying) {
+// //         _controller!.pause();
+// //       } else {
+// //         _controller!.play();
+// //       }
+// //     }
+// //   }
+// //
+// //   void _toggleMute() {
+// //     if (_controller != null) {
+// //       if (_isMuted) {
+// //         _controller!.unMute();
+// //         setState(() {
+// //           _isMuted = false;
+// //           _volume = 100;
+// //         });
+// //       } else {
+// //         _controller!.mute();
+// //         setState(() {
+// //           _isMuted = true;
+// //           _volume = 0;
+// //         });
+// //       }
+// //     }
+// //   }
+// //
+// //   void _seekForward(int seconds) {
+// //     if (_controller != null) {
+// //       final newPosition = _controller!.value.position + Duration(seconds: seconds);
+// //       _controller!.seekTo(newPosition);
+// //     }
+// //   }
+// //
+// //   void _seekBackward(int seconds) {
+// //     if (_controller != null) {
+// //       final newPosition = _controller!.value.position - Duration(seconds: seconds);
+// //       _controller!.seekTo(newPosition > Duration.zero ? newPosition : Duration.zero);
+// //     }
+// //   }
+// //
+// //   void _changePlaybackRate(double rate) {
+// //     if (_controller != null) {
+// //       _controller!.setPlaybackRate(rate);
+// //       setState(() {
+// //         _playbackRate = rate;
+// //       });
+// //     }
+// //   }
+// //
+// //   void _changeVolume(double volume) {
+// //     setState(() {
+// //       _volume = volume;
+// //       _isMuted = volume == 0;
+// //     });
+// //   }
+// //
+// //   void _onVolumeChangeEnd(double volume) {
+// //     if (_controller != null) {
+// //       _controller!.setVolume(volume.round());
+// //     }
+// //   }
+// //
+// //   Widget _buildCustomPlaybackSpeedButton() {
+// //     return PopupMenuButton<double>(
+// //       icon: Icon(Icons.speed, color: Colors.white),
+// //       tooltip: 'سرعة التشغيل',
+// //       onSelected: (speed) {
+// //         _changePlaybackRate(speed);
+// //       },
+// //       itemBuilder: (context) => [
+// //         PopupMenuItem(value: 0.25, child: Text('0.25x')),
+// //         PopupMenuItem(value: 0.5, child: Text('0.5x')),
+// //         PopupMenuItem(value: 0.75, child: Text('0.75x')),
+// //         PopupMenuItem(value: 1.0, child: Text('عادي (1.0x)')),
+// //         PopupMenuItem(value: 1.25, child: Text('1.25x')),
+// //         PopupMenuItem(value: 1.5, child: Text('1.5x')),
+// //         PopupMenuItem(value: 1.75, child: Text('1.75x')),
+// //         PopupMenuItem(value: 2.0, child: Text('2.0x')),
+// //       ],
+// //     );
+// //   }
+// //
+// //   Widget _buildVideoControls() {
+// //     return Container(
+// //       margin: EdgeInsets.symmetric(horizontal: 16.w),
+// //       padding: EdgeInsets.all(16.w),
+// //       decoration: BoxDecoration(
+// //         color: Colors.white,
+// //         borderRadius: BorderRadius.circular(16.w),
+// //         boxShadow: [
+// //           BoxShadow(
+// //             color: Colors.black12,
+// //             blurRadius: 8.w,
+// //             offset: Offset(0, 2.h),
+// //           ),
+// //         ],
+// //       ),
+// //       child: Column(
+// //         children: [
+// //           Row(
+// //             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+// //             children: [
+// //               _buildControlButton(
+// //                 icon: Icons.replay_10,
+// //                 text: 'رجوع 10ث',
+// //                 onPressed: () => _seekBackward(10),
+// //                 color: Color(0xFF1E88E5),
+// //               ),
+// //               _buildControlButton(
+// //                 icon: _isPlaying ? Icons.pause : Icons.play_arrow,
+// //                 text: _isPlaying ? 'إيقاف' : 'تشغيل',
+// //                 onPressed: _togglePlayPause,
+// //                 color: Color(0xFF1E88E5),
+// //               ),
+// //               _buildControlButton(
+// //                 icon: _isMuted ? Icons.volume_off : Icons.volume_up,
+// //                 text: _isMuted ? 'كتم' : 'صوت',
+// //                 onPressed: _toggleMute,
+// //                 color: Color(0xFFFFA726),
+// //               ),
+// //               _buildControlButton(
+// //                 icon: Icons.forward_10,
+// //                 text: 'تقدم 10ث',
+// //                 onPressed: () => _seekForward(10),
+// //                 color: Color(0xFF1E88E5),
+// //               ),
+// //             ],
+// //           ),
+// //
+// //           SizedBox(height: 16.h),
+// //
+// //           Row(
+// //             children: [
+// //               Icon(Icons.volume_up, size: 20.sp, color: Colors.grey[600]),
+// //               SizedBox(width: 12.w),
+// //               Expanded(
+// //                 child: Slider(
+// //                   value: _volume,
+// //                   min: 0,
+// //                   max: 100,
+// //                   divisions: 10,
+// //                   onChanged: _changeVolume,
+// //                   onChangeEnd: _onVolumeChangeEnd,
+// //                   activeColor: Color(0xFF1E88E5),
+// //                   inactiveColor: Colors.grey[300],
+// //                 ),
+// //               ),
+// //               SizedBox(width: 12.w),
+// //               Text(
+// //                 '${_volume.round()}%',
+// //                 style: TextStyle(fontSize: 12.sp, color: Colors.grey[600]),
+// //               ),
+// //             ],
+// //           ),
+// //
+// //           SizedBox(height: 12.h),
+// //
+// //           Row(
+// //             children: [
+// //               Icon(Icons.speed, size: 20.sp, color: Colors.grey[600]),
+// //               SizedBox(width: 12.w),
+// //               Text(
+// //                 'السرعة:',
+// //                 style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.bold),
+// //               ),
+// //               SizedBox(width: 8.w),
+// //               Expanded(
+// //                 child: DropdownButton<double>(
+// //                   value: _playbackRate,
+// //                   isExpanded: true,
+// //                   items: [0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0].map((speed) {
+// //                     return DropdownMenuItem(
+// //                       value: speed,
+// //                       child: Text(
+// //                         '${speed}x',
+// //                         style: TextStyle(fontSize: 12.sp),
+// //                       ),
+// //                     );
+// //                   }).toList(),
+// //                   onChanged: (speed) {
+// //                     if (speed != null) _changePlaybackRate(speed);
+// //                   },
+// //                 ),
+// //               ),
+// //             ],
+// //           ),
+// //         ],
+// //       ),
+// //     );
+// //   }
+// //
+// //   Widget _buildControlButton({
+// //     required IconData icon,
+// //     required String text,
+// //     required VoidCallback onPressed,
+// //     required Color color,
+// //   }) {
+// //     return Column(
+// //       children: [
+// //         Container(
+// //           width: 52.w,
+// //           height: 52.h,
+// //           decoration: BoxDecoration(
+// //             color: color,
+// //             shape: BoxShape.circle,
+// //             boxShadow: [
+// //               BoxShadow(
+// //                 color: color.withOpacity(0.4),
+// //                 blurRadius: 6.w,
+// //                 offset: Offset(0, 3.h),
+// //               ),
+// //             ],
+// //           ),
+// //           child: IconButton(
+// //             icon: Icon(icon, color: Colors.white, size: 22.sp),
+// //             onPressed: onPressed,
+// //           ),
+// //         ),
+// //         SizedBox(height: 8.h),
+// //         Text(
+// //           text,
+// //           style: TextStyle(
+// //             fontSize: 10.sp,
+// //             fontWeight: FontWeight.bold,
+// //             color: Colors.black87,
+// //             fontFamily: 'Tajawal',
+// //           ),
+// //         ),
+// //       ],
+// //     );
+// //   }
+// //
+// //   Widget _buildLessonInfo() {
+// //     return Container(
+// //       margin: EdgeInsets.all(16.w),
+// //       padding: EdgeInsets.all(20.w),
+// //       decoration: BoxDecoration(
+// //         color: Colors.white,
+// //         borderRadius: BorderRadius.circular(16.w),
+// //         boxShadow: [
+// //           BoxShadow(
+// //             color: Colors.black12,
+// //             blurRadius: 8.w,
+// //             offset: Offset(0, 2.h),
+// //           ),
+// //         ],
+// //       ),
+// //       child: Column(
+// //         crossAxisAlignment: CrossAxisAlignment.start,
+// //         children: [
+// //           Text(
+// //             'معلومات الدرس',
+// //             style: TextStyle(
+// //               fontSize: 18.sp,
+// //               fontWeight: FontWeight.bold,
+// //               color: Color(0xFF1E88E5),
+// //               fontFamily: 'Tajawal',
+// //             ),
+// //           ),
+// //           SizedBox(height: 16.h),
+// //           _buildInfoRow(
+// //             icon: Icons.school,
+// //             label: 'المستوى',
+// //             value: widget.lesson['level'] ?? 'مبتدئ',
+// //             iconColor: Color(0xFF1E88E5),
+// //           ),
+// //           SizedBox(height: 12.h),
+// //           _buildInfoRow(
+// //             icon: Icons.format_list_numbered,
+// //             label: 'رقم الدرس',
+// //             value: '${widget.lesson['order_number'] ?? '1'}',
+// //             iconColor: Color(0xFFFFA726),
+// //           ),
+// //           if (widget.lesson['description'] != null) ...[
+// //             SizedBox(height: 16.h),
+// //             Text(
+// //               'الوصف:',
+// //               style: TextStyle(
+// //                 fontSize: 16.sp,
+// //                 fontWeight: FontWeight.bold,
+// //                 fontFamily: 'Tajawal',
+// //               ),
+// //             ),
+// //             SizedBox(height: 8.h),
+// //             Text(
+// //               widget.lesson['description']!,
+// //               style: TextStyle(
+// //                 fontSize: 14.sp,
+// //                 color: Colors.grey[700],
+// //                 fontFamily: 'Tajawal',
+// //                 height: 1.5,
+// //               ),
+// //               textAlign: TextAlign.right,
+// //             ),
+// //           ],
+// //         ],
+// //       ),
+// //     );
+// //   }
+// //
+// //   Widget _buildInfoRow({
+// //     required IconData icon,
+// //     required String label,
+// //     required String value,
+// //     required Color iconColor,
+// //   }) {
+// //     return Row(
+// //       children: [
+// //         Icon(icon, size: 20.sp, color: iconColor),
+// //         SizedBox(width: 12.w),
+// //         Column(
+// //           crossAxisAlignment: CrossAxisAlignment.start,
+// //           children: [
+// //             Text(
+// //               label,
+// //               style: TextStyle(
+// //                 fontSize: 12.sp,
+// //                 color: Colors.grey[600],
+// //                 fontFamily: 'Tajawal',
+// //               ),
+// //             ),
+// //             Text(
+// //               value,
+// //               style: TextStyle(
+// //                 fontSize: 14.sp,
+// //                 fontWeight: FontWeight.bold,
+// //                 fontFamily: 'Tajawal',
+// //               ),
+// //             ),
+// //           ],
+// //         ),
+// //       ],
+// //     );
+// //   }
+// //
+// //   PreferredSizeWidget _buildAppBar() {
+// //     return AppBar(
+// //       backgroundColor: Color(0xFF1E88E5),
+// //       foregroundColor: Colors.white,
+// //       leading: IconButton(
+// //         icon: Icon(Icons.arrow_back),
+// //         onPressed: () => Navigator.pop(context),
+// //       ),
+// //       title: Text(
+// //         widget.lesson['title'] ?? 'عرض الدرس',
+// //         style: TextStyle(
+// //           fontSize: 18.sp,
+// //           fontWeight: FontWeight.bold,
+// //           fontFamily: 'Tajawal',
+// //         ),
+// //         maxLines: 1,
+// //         overflow: TextOverflow.ellipsis,
+// //       ),
+// //       centerTitle: true,
+// //       elevation: 0,
+// //     );
+// //   }
+// //
+// //   @override
+// //   Widget build(BuildContext context) {
+// //     if (_hasError) {
+// //       return Scaffold(
+// //         appBar: _buildAppBar(),
+// //         body: Center(
+// //           child: Column(
+// //             mainAxisAlignment: MainAxisAlignment.center,
+// //             children: [
+// //               Icon(Icons.error_outline, size: 60.sp, color: Colors.red),
+// //               SizedBox(height: 16.h),
+// //               Text(
+// //                 _errorMessage,
+// //                 style: TextStyle(
+// //                   fontSize: 16.sp,
+// //                   color: Colors.red[700],
+// //                   fontFamily: 'Tajawal',
+// //                 ),
+// //                 textAlign: TextAlign.center,
+// //               ),
+// //             ],
+// //           ),
+// //         ),
+// //       );
+// //     }
+// //
+// //     if (_controller == null && !_hasError) {
+// //       return Scaffold(
+// //         appBar: _buildAppBar(),
+// //         body: Center(
+// //           child: Column(
+// //             mainAxisAlignment: MainAxisAlignment.center,
+// //             children: [
+// //               CircularProgressIndicator(color: Color(0xFF1E88E5)),
+// //               SizedBox(height: 16.h),
+// //               Text(
+// //                 'جاري تهيئة مشغل الفيديو...',
+// //                 style: TextStyle(
+// //                   fontSize: 16.sp,
+// //                   color: Color(0xFF1E88E5),
+// //                   fontFamily: 'Tajawal',
+// //                 ),
+// //               ),
+// //             ],
+// //           ),
+// //         ),
+// //       );
+// //     }
+// //
+// //     if (_controller == null) {
+// //       return Scaffold(
+// //         appBar: _buildAppBar(),
+// //         body: Center(
+// //           child: Text(
+// //             'خطأ في تحميل الفيديو',
+// //             style: TextStyle(
+// //               fontSize: 16.sp,
+// //               color: Colors.red,
+// //               fontFamily: 'Tajawal',
+// //             ),
+// //           ),
+// //         ),
+// //       );
+// //     }
+// //
+// //     return WillPopScope(
+// //       onWillPop: () async {
+// //         if (_controller != null && _controller!.value.isFullScreen) {
+// //           _controller!.toggleFullScreenMode();
+// //           return false;
+// //         }
+// //         return true;
+// //       },
+// //       child: YoutubePlayerBuilder(
+// //         onEnterFullScreen: () {
+// //           SystemChrome.setPreferredOrientations([
+// //             DeviceOrientation.landscapeRight,
+// //             DeviceOrientation.landscapeLeft,
+// //           ]);
+// //         },
+// //         onExitFullScreen: () {
+// //           SystemChrome.setPreferredOrientations([
+// //             DeviceOrientation.portraitUp,
+// //           ]);
+// //         },
+// //         player: YoutubePlayer(
+// //           controller: _controller!,
+// //           showVideoProgressIndicator: true,
+// //           progressIndicatorColor: Color(0xFF1E88E5),
+// //           progressColors: ProgressBarColors(
+// //             playedColor: Color(0xFF1E88E5),
+// //             handleColor: Color(0xFF1E88E5),
+// //             backgroundColor: Colors.grey[300]!,
+// //           ),
+// //           onReady: () {
+// //             if (mounted) {
+// //               setState(() {
+// //                 _isPlayerReady = true;
+// //               });
+// //             }
+// //           },
+// //           onEnded: (metaData) {
+// //             if (mounted) {
+// //               setState(() {
+// //                 _isPlaying = false;
+// //               });
+// //             }
+// //           },
+// //           bottomActions: [
+// //             CurrentPosition(),
+// //             ProgressBar(isExpanded: true),
+// //             RemainingDuration(),
+// //             _buildCustomPlaybackSpeedButton(),
+// //             FullScreenButton(),
+// //           ],
+// //         ),
+// //         builder: (context, player) {
+// //           return Scaffold(
+// //             backgroundColor: Color(0xFFF5F9FF),
+// //             appBar: _buildAppBar(),
+// //             body: SingleChildScrollView(
+// //               child: Column(
+// //                 crossAxisAlignment: CrossAxisAlignment.stretch,
+// //                 children: [
+// //                   Container(
+// //                     height: MediaQuery.of(context).size.height * 0.4,
+// //                     margin: EdgeInsets.all(8.w),
+// //                     decoration: BoxDecoration(
+// //                       borderRadius: BorderRadius.circular(12.w),
+// //                       boxShadow: [
+// //                         BoxShadow(
+// //                           color: Colors.black26,
+// //                           blurRadius: 12.w,
+// //                           offset: Offset(0, 6.h),
+// //                         ),
+// //                       ],
+// //                     ),
+// //                     child: ClipRRect(
+// //                       borderRadius: BorderRadius.circular(12.w),
+// //                       child: player,
+// //                     ),
+// //                   ),
+// //
+// //                   if (_isPlayerReady) ...[
+// //                     SizedBox(height: 16.h),
+// //                     _buildVideoControls(),
+// //                   ],
+// //
+// //                   SizedBox(height: 16.h),
+// //                   _buildLessonInfo(),
+// //                   SizedBox(height: 20.h),
+// //                 ],
+// //               ),
+// //             ),
+// //           );
+// //         },
+// //       ),
+// //     );
+// //   }
+// //
+// //   @override
+// //   void dispose() {
+// //     SystemChrome.setPreferredOrientations([
+// //       DeviceOrientation.portraitUp,
+// //       DeviceOrientation.landscapeRight,
+// //       DeviceOrientation.landscapeLeft,
+// //     ]);
+// //
+// //     _controller?.removeListener(_videoListener);
+// //     _controller?.dispose();
+// //     super.dispose();
+// //   }
+// // }
+//
+// // import 'package:flutter/material.dart';
+// // import 'package:flutter/services.dart';
+// // import 'package:flutter_screenutil/flutter_screenutil.dart';
+// // import 'package:youtube_player_flutter/youtube_player_flutter.dart';
+// //
+// // class LessonDetailScreen extends StatefulWidget {
+// //   final Map<String, dynamic> lesson;
+// //
+// //   const LessonDetailScreen({Key? key, required this.lesson}) : super(key: key);
+// //
+// //   @override
+// //   _LessonDetailScreenState createState() => _LessonDetailScreenState();
+// // }
+// //
+// // class _LessonDetailScreenState extends State<LessonDetailScreen> {
+// //   YoutubePlayerController? _controller;
+// //   bool _isPlayerReady = false;
+// //   bool _hasError = false;
+// //   String _errorMessage = '';
+// //   bool _isMuted = false;
+// //   double _volume = 100;
+// //   bool _isPlaying = false;
+// //   double _playbackRate = 1.0;
+// //   bool _isDisposing = false; // ✅ منع العمليات أثناء الإغلاق
+// //
+// //   @override
+// //   void initState() {
+// //     super.initState();
+// //     _initializeYouTubePlayer();
+// //     SystemChrome.setPreferredOrientations([
+// //       DeviceOrientation.portraitUp,
+// //     ]);
+// //   }
+// //
+// //   void _initializeYouTubePlayer() {
+// //     try {
+// //       String? videoUrl = widget.lesson['video_url'] ?? 'https://youtu.be/UB1O30fR-EE';
+// //
+// //       if (videoUrl != null && videoUrl.isNotEmpty) {
+// //         String? videoId = YoutubePlayer.convertUrlToId(videoUrl);
+// //
+// //         if (videoId != null) {
+// //           _controller = YoutubePlayerController(
+// //             initialVideoId: videoId,
+// //             flags: YoutubePlayerFlags(
+// //               autoPlay: false,
+// //               mute: false,
+// //               enableCaption: true,
+// //               captionLanguage: 'ar',
+// //               hideControls: false,
+// //               controlsVisibleAtStart: true,
+// //               useHybridComposition: true,
+// //               disableDragSeek: false,
+// //               loop: false,
+// //               isLive: false,
+// //               forceHD: false, // ✅ تغيير إلى false لتحسين الأداء
+// //             ),
+// //           );
+// //
+// //           _controller!.addListener(_videoListener);
+// //
+// //           if (mounted) {
+// //             setState(() {
+// //               _isPlayerReady = true;
+// //             });
+// //           }
+// //
+// //         } else {
+// //           _setErrorState('رابط الفيديو غير صالح');
+// //         }
+// //       } else {
+// //         _setErrorState('لا يتوفر فيديو لهذا الدرس');
+// //       }
+// //     } catch (e) {
+// //       _setErrorState('خطأ في تهيئة مشغل الفيديو: $e');
+// //     }
+// //   }
+// //
+// //   void _videoListener() {
+// //     if (!mounted || _isDisposing) return;
+// //
+// //     if (_controller != null) {
+// //       setState(() {
+// //         _isPlaying = _controller!.value.isPlaying;
+// //       });
+// //     }
+// //   }
+// //
+// //   void _setErrorState(String message) {
+// //     if (mounted && !_isDisposing) {
+// //       setState(() {
+// //         _hasError = true;
+// //         _errorMessage = message;
+// //         _isPlayerReady = false;
+// //       });
+// //     }
+// //   }
+// //
+// //   // ✅ إيقاف الفيديو قبل الخروج من الشاشة
+// //   void _stopVideoBeforeExit() {
+// //     if (_controller != null && _isPlayerReady) {
+// //       // إيقاف الفيديو وإعادة تعيينه
+// //       _controller!.pause();
+// //       // إرجاع الفيديو إلى البداية
+// //       _controller!.seekTo(Duration.zero);
+// //     }
+// //   }
+// //
+// //   // ✅ التعامل مع زر الرجوع يدويًا
+// //   Future<bool> _onWillPop() async {
+// //     // إذا كان في وضع fullscreen، نخرج منه أولاً
+// //     if (_controller != null && _controller!.value.isFullScreen) {
+// //       _controller!.toggleFullScreenMode();
+// //       return false;
+// //     }
+// //
+// //     // إيقاف الفيديو قبل الخروج
+// //     _stopVideoBeforeExit();
+// //
+// //     // انتظار قليل لضمان إيقاف الفيديو
+// //     await Future.delayed(Duration(milliseconds: 100));
+// //
+// //     return true;
+// //   }
+// //
+// //   void _togglePlayPause() {
+// //     if (_isPlayerReady && _controller != null && !_isDisposing) {
+// //       if (_controller!.value.isPlaying) {
+// //         _controller!.pause();
+// //       } else {
+// //         _controller!.play();
+// //       }
+// //     }
+// //   }
+// //
+// //   void _toggleMute() {
+// //     if (_controller != null && !_isDisposing) {
+// //       if (_isMuted) {
+// //         _controller!.unMute();
+// //         setState(() {
+// //           _isMuted = false;
+// //           _volume = 100;
+// //         });
+// //       } else {
+// //         _controller!.mute();
+// //         setState(() {
+// //           _isMuted = true;
+// //           _volume = 0;
+// //         });
+// //       }
+// //     }
+// //   }
+// //
+// //   void _seekForward(int seconds) {
+// //     if (_controller != null && !_isDisposing) {
+// //       final newPosition = _controller!.value.position + Duration(seconds: seconds);
+// //       _controller!.seekTo(newPosition);
+// //     }
+// //   }
+// //
+// //   void _seekBackward(int seconds) {
+// //     if (_controller != null && !_isDisposing) {
+// //       final newPosition = _controller!.value.position - Duration(seconds: seconds);
+// //       _controller!.seekTo(newPosition > Duration.zero ? newPosition : Duration.zero);
+// //     }
+// //   }
+// //
+// //   void _changePlaybackRate(double rate) {
+// //     if (_controller != null && !_isDisposing) {
+// //       _controller!.setPlaybackRate(rate);
+// //       setState(() {
+// //         _playbackRate = rate;
+// //       });
+// //     }
+// //   }
+// //
+// //   void _changeVolume(double volume) {
+// //     if (!_isDisposing) {
+// //       setState(() {
+// //         _volume = volume;
+// //         _isMuted = volume == 0;
+// //       });
+// //     }
+// //   }
+// //
+// //   void _onVolumeChangeEnd(double volume) {
+// //     if (_controller != null && !_isDisposing) {
+// //       _controller!.setVolume(volume.round());
+// //     }
+// //   }
+// //
+// //   Widget _buildCustomPlaybackSpeedButton() {
+// //     return PopupMenuButton<double>(
+// //       icon: Icon(Icons.speed, color: Colors.white),
+// //       tooltip: 'سرعة التشغيل',
+// //       onSelected: (speed) {
+// //         _changePlaybackRate(speed);
+// //       },
+// //       itemBuilder: (context) => [
+// //         PopupMenuItem(value: 0.25, child: Text('0.25x')),
+// //         PopupMenuItem(value: 0.5, child: Text('0.5x')),
+// //         PopupMenuItem(value: 0.75, child: Text('0.75x')),
+// //         PopupMenuItem(value: 1.0, child: Text('عادي (1.0x)')),
+// //         PopupMenuItem(value: 1.25, child: Text('1.25x')),
+// //         PopupMenuItem(value: 1.5, child: Text('1.5x')),
+// //         PopupMenuItem(value: 1.75, child: Text('1.75x')),
+// //         PopupMenuItem(value: 2.0, child: Text('2.0x')),
+// //       ],
+// //     );
+// //   }
+// //
+// //   Widget _buildVideoControls() {
+// //     return Container(
+// //       margin: EdgeInsets.symmetric(horizontal: 16.w),
+// //       padding: EdgeInsets.all(16.w),
+// //       decoration: BoxDecoration(
+// //         color: Colors.white,
+// //         borderRadius: BorderRadius.circular(16.w),
+// //         boxShadow: [
+// //           BoxShadow(
+// //             color: Colors.black12,
+// //             blurRadius: 8.w,
+// //             offset: Offset(0, 2.h),
+// //           ),
+// //         ],
+// //       ),
+// //       child: Column(
+// //         children: [
+// //           Row(
+// //             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+// //             children: [
+// //               _buildControlButton(
+// //                 icon: Icons.replay_10,
+// //                 text: 'رجوع 10ث',
+// //                 onPressed: () => _seekBackward(10),
+// //                 color: Color(0xFF1E88E5),
+// //               ),
+// //               _buildControlButton(
+// //                 icon: _isPlaying ? Icons.pause : Icons.play_arrow,
+// //                 text: _isPlaying ? 'إيقاف' : 'تشغيل',
+// //                 onPressed: _togglePlayPause,
+// //                 color: Color(0xFF1E88E5),
+// //               ),
+// //               _buildControlButton(
+// //                 icon: _isMuted ? Icons.volume_off : Icons.volume_up,
+// //                 text: _isMuted ? 'كتم' : 'صوت',
+// //                 onPressed: _toggleMute,
+// //                 color: Color(0xFFFFA726),
+// //               ),
+// //               _buildControlButton(
+// //                 icon: Icons.forward_10,
+// //                 text: 'تقدم 10ث',
+// //                 onPressed: () => _seekForward(10),
+// //                 color: Color(0xFF1E88E5),
+// //               ),
+// //             ],
+// //           ),
+// //
+// //           SizedBox(height: 16.h),
+// //
+// //           Row(
+// //             children: [
+// //               Icon(Icons.volume_up, size: 20.sp, color: Colors.grey[600]),
+// //               SizedBox(width: 12.w),
+// //               Expanded(
+// //                 child: Slider(
+// //                   value: _volume,
+// //                   min: 0,
+// //                   max: 100,
+// //                   divisions: 10,
+// //                   onChanged: _changeVolume,
+// //                   onChangeEnd: _onVolumeChangeEnd,
+// //                   activeColor: Color(0xFF1E88E5),
+// //                   inactiveColor: Colors.grey[300],
+// //                 ),
+// //               ),
+// //               SizedBox(width: 12.w),
+// //               Text(
+// //                 '${_volume.round()}%',
+// //                 style: TextStyle(fontSize: 12.sp, color: Colors.grey[600]),
+// //               ),
+// //             ],
+// //           ),
+// //
+// //           SizedBox(height: 12.h),
+// //
+// //           Row(
+// //             children: [
+// //               Icon(Icons.speed, size: 20.sp, color: Colors.grey[600]),
+// //               SizedBox(width: 12.w),
+// //               Text(
+// //                 'السرعة:',
+// //                 style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.bold),
+// //               ),
+// //               SizedBox(width: 8.w),
+// //               Expanded(
+// //                 child: DropdownButton<double>(
+// //                   value: _playbackRate,
+// //                   isExpanded: true,
+// //                   items: [0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0].map((speed) {
+// //                     return DropdownMenuItem(
+// //                       value: speed,
+// //                       child: Text(
+// //                         '${speed}x',
+// //                         style: TextStyle(fontSize: 12.sp),
+// //                       ),
+// //                     );
+// //                   }).toList(),
+// //                   onChanged: (speed) {
+// //                     if (speed != null) _changePlaybackRate(speed);
+// //                   },
+// //                 ),
+// //               ),
+// //             ],
+// //           ),
+// //         ],
+// //       ),
+// //     );
+// //   }
+// //
+// //   Widget _buildControlButton({
+// //     required IconData icon,
+// //     required String text,
+// //     required VoidCallback onPressed,
+// //     required Color color,
+// //   }) {
+// //     return Column(
+// //       children: [
+// //         Container(
+// //           width: 52.w,
+// //           height: 52.h,
+// //           decoration: BoxDecoration(
+// //             color: color,
+// //             shape: BoxShape.circle,
+// //             boxShadow: [
+// //               BoxShadow(
+// //                 color: color.withOpacity(0.4),
+// //                 blurRadius: 6.w,
+// //                 offset: Offset(0, 3.h),
+// //               ),
+// //             ],
+// //           ),
+// //           child: IconButton(
+// //             icon: Icon(icon, color: Colors.white, size: 22.sp),
+// //             onPressed: onPressed,
+// //           ),
+// //         ),
+// //         SizedBox(height: 8.h),
+// //         Text(
+// //           text,
+// //           style: TextStyle(
+// //             fontSize: 10.sp,
+// //             fontWeight: FontWeight.bold,
+// //             color: Colors.black87,
+// //             fontFamily: 'Tajawal',
+// //           ),
+// //         ),
+// //       ],
+// //     );
+// //   }
+// //
+// //   Widget _buildLessonInfo() {
+// //     return Container(
+// //       margin: EdgeInsets.all(16.w),
+// //       padding: EdgeInsets.all(20.w),
+// //       decoration: BoxDecoration(
+// //         color: Colors.white,
+// //         borderRadius: BorderRadius.circular(16.w),
+// //         boxShadow: [
+// //           BoxShadow(
+// //             color: Colors.black12,
+// //             blurRadius: 8.w,
+// //             offset: Offset(0, 2.h),
+// //           ),
+// //         ],
+// //       ),
+// //       child: Column(
+// //         crossAxisAlignment: CrossAxisAlignment.start,
+// //         children: [
+// //           Text(
+// //             'معلومات الدرس',
+// //             style: TextStyle(
+// //               fontSize: 18.sp,
+// //               fontWeight: FontWeight.bold,
+// //               color: Color(0xFF1E88E5),
+// //               fontFamily: 'Tajawal',
+// //             ),
+// //           ),
+// //           SizedBox(height: 16.h),
+// //           _buildInfoRow(
+// //             icon: Icons.school,
+// //             label: 'المستوى',
+// //             value: widget.lesson['level'] ?? 'مبتدئ',
+// //             iconColor: Color(0xFF1E88E5),
+// //           ),
+// //           SizedBox(height: 12.h),
+// //           _buildInfoRow(
+// //             icon: Icons.format_list_numbered,
+// //             label: 'رقم الدرس',
+// //             value: '${widget.lesson['order_number'] ?? '1'}',
+// //             iconColor: Color(0xFFFFA726),
+// //           ),
+// //           if (widget.lesson['description'] != null) ...[
+// //             SizedBox(height: 16.h),
+// //             Text(
+// //               'الوصف:',
+// //               style: TextStyle(
+// //                 fontSize: 16.sp,
+// //                 fontWeight: FontWeight.bold,
+// //                 fontFamily: 'Tajawal',
+// //               ),
+// //             ),
+// //             SizedBox(height: 8.h),
+// //             Text(
+// //               widget.lesson['description']!,
+// //               style: TextStyle(
+// //                 fontSize: 14.sp,
+// //                 color: Colors.grey[700],
+// //                 fontFamily: 'Tajawal',
+// //                 height: 1.5,
+// //               ),
+// //               textAlign: TextAlign.right,
+// //             ),
+// //           ],
+// //         ],
+// //       ),
+// //     );
+// //   }
+// //
+// //   Widget _buildInfoRow({
+// //     required IconData icon,
+// //     required String label,
+// //     required String value,
+// //     required Color iconColor,
+// //   }) {
+// //     return Row(
+// //       children: [
+// //         Icon(icon, size: 20.sp, color: iconColor),
+// //         SizedBox(width: 12.w),
+// //         Column(
+// //           crossAxisAlignment: CrossAxisAlignment.start,
+// //           children: [
+// //             Text(
+// //               label,
+// //               style: TextStyle(
+// //                 fontSize: 12.sp,
+// //                 color: Colors.grey[600],
+// //                 fontFamily: 'Tajawal',
+// //               ),
+// //             ),
+// //             Text(
+// //               value,
+// //               style: TextStyle(
+// //                 fontSize: 14.sp,
+// //                 fontWeight: FontWeight.bold,
+// //                 fontFamily: 'Tajawal',
+// //               ),
+// //             ),
+// //           ],
+// //         ),
+// //       ],
+// //     );
+// //   }
+// //
+// //   PreferredSizeWidget _buildAppBar() {
+// //     return AppBar(
+// //       backgroundColor: Color(0xFF1E88E5),
+// //       foregroundColor: Colors.white,
+// //       leading: IconButton(
+// //         icon: Icon(Icons.arrow_back),
+// //         onPressed: () async {
+// //           // ✅ استخدام الدالة الجديدة للتعامل مع الرجوع
+// //           if (await _onWillPop()) {
+// //             Navigator.pop(context);
+// //           }
+// //         },
+// //       ),
+// //       title: Text(
+// //         widget.lesson['title'] ?? 'عرض الدرس',
+// //         style: TextStyle(
+// //           fontSize: 18.sp,
+// //           fontWeight: FontWeight.bold,
+// //           fontFamily: 'Tajawal',
+// //         ),
+// //         maxLines: 1,
+// //         overflow: TextOverflow.ellipsis,
+// //       ),
+// //       centerTitle: true,
+// //       elevation: 0,
+// //     );
+// //   }
+// //
+// //   @override
+// //   Widget build(BuildContext context) {
+// //     if (_hasError) {
+// //       return Scaffold(
+// //         appBar: _buildAppBar(),
+// //         body: Center(
+// //           child: Column(
+// //             mainAxisAlignment: MainAxisAlignment.center,
+// //             children: [
+// //               Icon(Icons.error_outline, size: 60.sp, color: Colors.red),
+// //               SizedBox(height: 16.h),
+// //               Text(
+// //                 _errorMessage,
+// //                 style: TextStyle(
+// //                   fontSize: 16.sp,
+// //                   color: Colors.red[700],
+// //                   fontFamily: 'Tajawal',
+// //                 ),
+// //                 textAlign: TextAlign.center,
+// //               ),
+// //             ],
+// //           ),
+// //         ),
+// //       );
+// //     }
+// //
+// //     if (_controller == null && !_hasError) {
+// //       return Scaffold(
+// //         appBar: _buildAppBar(),
+// //         body: Center(
+// //           child: Column(
+// //             mainAxisAlignment: MainAxisAlignment.center,
+// //             children: [
+// //               CircularProgressIndicator(color: Color(0xFF1E88E5)),
+// //               SizedBox(height: 16.h),
+// //               Text(
+// //                 'جاري تهيئة مشغل الفيديو...',
+// //                 style: TextStyle(
+// //                   fontSize: 16.sp,
+// //                   color: Color(0xFF1E88E5),
+// //                   fontFamily: 'Tajawal',
+// //                 ),
+// //               ),
+// //             ],
+// //           ),
+// //         ),
+// //       );
+// //     }
+// //
+// //     if (_controller == null) {
+// //       return Scaffold(
+// //         appBar: _buildAppBar(),
+// //         body: Center(
+// //           child: Text(
+// //             'خطأ في تحميل الفيديو',
+// //             style: TextStyle(
+// //               fontSize: 16.sp,
+// //               color: Colors.red,
+// //               fontFamily: 'Tajawal',
+// //             ),
+// //           ),
+// //         ),
+// //       );
+// //     }
+// //
+// //     return WillPopScope(
+// //       onWillPop: _onWillPop, // ✅ استخدام الدالة المحسنة
+// //       child: YoutubePlayerBuilder(
+// //         onEnterFullScreen: () {
+// //           SystemChrome.setPreferredOrientations([
+// //             DeviceOrientation.landscapeRight,
+// //             DeviceOrientation.landscapeLeft,
+// //           ]);
+// //         },
+// //         onExitFullScreen: () {
+// //           SystemChrome.setPreferredOrientations([
+// //             DeviceOrientation.portraitUp,
+// //           ]);
+// //         },
+// //         player: YoutubePlayer(
+// //           controller: _controller!,
+// //           showVideoProgressIndicator: true,
+// //           progressIndicatorColor: Color(0xFF1E88E5),
+// //           progressColors: ProgressBarColors(
+// //             playedColor: Color(0xFF1E88E5),
+// //             handleColor: Color(0xFF1E88E5),
+// //             backgroundColor: Colors.grey[300]!,
+// //           ),
+// //           onReady: () {
+// //             if (mounted && !_isDisposing) {
+// //               setState(() {
+// //                 _isPlayerReady = true;
+// //               });
+// //             }
+// //           },
+// //           onEnded: (metaData) {
+// //             if (mounted && !_isDisposing) {
+// //               setState(() {
+// //                 _isPlaying = false;
+// //               });
+// //             }
+// //           },
+// //           bottomActions: [
+// //             CurrentPosition(),
+// //             ProgressBar(isExpanded: true),
+// //             RemainingDuration(),
+// //             _buildCustomPlaybackSpeedButton(),
+// //             FullScreenButton(),
+// //           ],
+// //         ),
+// //         builder: (context, player) {
+// //           return Scaffold(
+// //             backgroundColor: Color(0xFFF5F9FF),
+// //             appBar: _buildAppBar(),
+// //             body: SingleChildScrollView(
+// //               child: Column(
+// //                 crossAxisAlignment: CrossAxisAlignment.stretch,
+// //                 children: [
+// //                   // ✅ إضافة AnimatedContainer لتحسين الانتقال
+// //                   AnimatedContainer(
+// //                     duration: Duration(milliseconds: 200),
+// //                     height: MediaQuery.of(context).size.height * 0.4,
+// //                     margin: EdgeInsets.all(8.w),
+// //                     decoration: BoxDecoration(
+// //                       borderRadius: BorderRadius.circular(12.w),
+// //                       boxShadow: [
+// //                         BoxShadow(
+// //                           color: Colors.black26,
+// //                           blurRadius: 12.w,
+// //                           offset: Offset(0, 6.h),
+// //                         ),
+// //                       ],
+// //                     ),
+// //                     child: ClipRRect(
+// //                       borderRadius: BorderRadius.circular(12.w),
+// //                       child: player,
+// //                     ),
+// //                   ),
+// //
+// //                   if (_isPlayerReady) ...[
+// //                     SizedBox(height: 16.h),
+// //                     _buildVideoControls(),
+// //                   ],
+// //
+// //                   SizedBox(height: 16.h),
+// //                   _buildLessonInfo(),
+// //                   SizedBox(height: 20.h),
+// //                 ],
+// //               ),
+// //             ),
+// //           );
+// //         },
+// //       ),
+// //     );
+// //   }
+// //
+// //   @override
+// //   void dispose() {
+// //     _isDisposing = true; // ✅ وضع علامة أننا في حالة إغلاق
+// //
+// //     // ✅ إيقاف الفيديو أولاً
+// //     _stopVideoBeforeExit();
+// //
+// //     // ✅ الانتظار قليلاً قبل التدمير
+// //     Future.delayed(Duration(milliseconds: 50)).then((_) {
+// //       _controller?.removeListener(_videoListener);
+// //       _controller?.dispose();
+// //     });
+// //
+// //     // ✅ إعادة ضبط اتجاه الشاشة
+// //     SystemChrome.setPreferredOrientations([
+// //       DeviceOrientation.portraitUp,
+// //       DeviceOrientation.landscapeRight,
+// //       DeviceOrientation.landscapeLeft,
+// //     ]);
+// //
+// //     super.dispose();
+// //   }
+// // }
+// import 'dart:async';
+// import 'package:flutter/material.dart';
+// import 'package:flutter/services.dart';
+// import 'package:flutter_screenutil/flutter_screenutil.dart';
+// import 'package:youtube_player_flutter/youtube_player_flutter.dart';
+//
+// class LessonDetailScreen extends StatefulWidget {
+//   final Map<String, dynamic> lesson;
+//
+//   const LessonDetailScreen({Key? key, required this.lesson}) : super(key: key);
+//
+//   @override
+//   _LessonDetailScreenState createState() => _LessonDetailScreenState();
+// }
+//
+// class _LessonDetailScreenState extends State<LessonDetailScreen> {
+//   YoutubePlayerController? _controller;
+//   bool _isPlayerReady = false;
+//   bool _hasError = false;
+//   String _errorMessage = '';
+//   bool _isMuted = false;
+//   bool _isPlaying = false;
+//   double _playbackRate = 1.0;
+//   bool _isDisposing = false;
+//   bool _showControls = true;
+//   Timer? _controlsTimer;
+//
+//   bool _previousPlayingState = false;
+//   bool _previousControlsState = true;
+//   bool _isFirstPlay = true;
+//   bool _showInitialLoader = true;
+//
+//   @override
+//   void initState() {
+//     super.initState();
+//     _initializeScreen();
+//   }
+//
+//   void _initializeScreen() {
+//     _enterFullScreenMode();
+//     _initializeYouTubePlayer();
+//     _startControlsTimer();
+//   }
+//
+//   void _enterFullScreenMode() {
+//     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+//     SystemChrome.setPreferredOrientations([
+//       DeviceOrientation.landscapeRight,
+//       DeviceOrientation.landscapeLeft,
+//     ]);
+//   }
+//
+//   void _exitFullScreenMode() {
+//     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+//     SystemChrome.setPreferredOrientations([
+//       DeviceOrientation.portraitUp,
+//     ]);
+//   }
+//
+//   void _initializeYouTubePlayer() {
+//     try {
+//       // ✅ التعديل: دعم هيكل Firebase للبيانات
+//       String? videoUrl = widget.lesson['video_url'] ??
+//           widget.lesson['youtube_url'] ??
+//           'https://youtu.be/UB1O30fR-EE';
+//
+//       if (videoUrl != null && videoUrl.isNotEmpty) {
+//         String? videoId = YoutubePlayer.convertUrlToId(videoUrl);
+//
+//         if (videoId != null) {
+//           _controller = YoutubePlayerController(
+//             initialVideoId: videoId,
+//             flags: YoutubePlayerFlags(
+//               autoPlay: true,
+//               mute: false,
+//               enableCaption: true,
+//               captionLanguage: 'ar',
+//               hideControls: true,
+//               controlsVisibleAtStart: false,
+//               useHybridComposition: true,
+//               disableDragSeek: false,
+//               loop: false,
+//               isLive: false,
+//               forceHD: true,
+//               startAt: 0,
+//             ),
+//           );
+//
+//           _controller!.addListener(_optimizedVideoListener);
+//           _preloadVideo();
+//
+//         } else {
+//           _setErrorState('رابط الفيديو غير صالح');
+//         }
+//       } else {
+//         _setErrorState('لا يتوفر فيديو لهذا الدرس');
+//       }
+//     } catch (e) {
+//       _setErrorState('خطأ في تهيئة مشغل الفيديو: $e');
+//     }
+//   }
+//
+//   void _preloadVideo() {
+//     if (_controller != null && !_isDisposing && mounted) {
+//       setState(() {
+//         _isPlayerReady = true;
+//       });
+//     }
+//   }
+//
+//   void _optimizedVideoListener() {
+//     if (!mounted || _isDisposing || _controller == null) return;
+//
+//     final currentPlayingState = _controller!.value.isPlaying;
+//
+//     if (currentPlayingState != _previousPlayingState) {
+//       _previousPlayingState = currentPlayingState;
+//
+//       WidgetsBinding.instance.addPostFrameCallback((_) {
+//         if (mounted && !_isDisposing) {
+//           setState(() {
+//             _isPlaying = currentPlayingState;
+//
+//             if (_isPlaying && _showInitialLoader) {
+//               _showInitialLoader = false;
+//             }
+//
+//             if (_isPlaying && _isFirstPlay) {
+//               _isFirstPlay = false;
+//               Future.delayed(Duration(seconds: 2), () {
+//                 if (mounted && !_isDisposing) {
+//                   setState(() {
+//                     _showControls = false;
+//                   });
+//                 }
+//               });
+//             }
+//           });
+//         }
+//       });
+//     }
+//   }
+//
+//   void _setErrorState(String message) {
+//     if (mounted && !_isDisposing) {
+//       setState(() {
+//         _hasError = true;
+//         _errorMessage = message;
+//         _isPlayerReady = false;
+//         _showInitialLoader = false;
+//       });
+//     }
+//   }
+//
+//   void _stopVideoBeforeExit() {
+//     if (_controller != null && _isPlayerReady) {
+//       _controller!.pause();
+//       _controller!.seekTo(Duration.zero);
+//     }
+//   }
+//
+//   Future<bool> _onWillPop() async {
+//     _exitFullScreenMode();
+//     _stopVideoBeforeExit();
+//     await Future.delayed(Duration(milliseconds: 100));
+//     return true;
+//   }
+//
+//   void _togglePlayPause() {
+//     if (_isPlayerReady && _controller != null && !_isDisposing) {
+//       if (_controller!.value.isPlaying) {
+//         _controller!.pause();
+//       } else {
+//         _controller!.play();
+//       }
+//       _showControlsTemporarily();
+//     }
+//   }
+//
+//   void _toggleMute() {
+//     if (_controller != null && !_isDisposing) {
+//       if (_isMuted) {
+//         _controller!.unMute();
+//       } else {
+//         _controller!.mute();
+//       }
+//       WidgetsBinding.instance.addPostFrameCallback((_) {
+//         if (mounted) {
+//           setState(() {
+//             _isMuted = !_isMuted;
+//           });
+//         }
+//       });
+//       _showControlsTemporarily();
+//     }
+//   }
+//
+//   void _seekForward(int seconds) {
+//     if (_controller != null && !_isDisposing) {
+//       final newPosition = _controller!.value.position + Duration(seconds: seconds);
+//       _controller!.seekTo(newPosition);
+//       _showControlsTemporarily();
+//     }
+//   }
+//
+//   void _seekBackward(int seconds) {
+//     if (_controller != null && !_isDisposing) {
+//       final newPosition = _controller!.value.position - Duration(seconds: seconds);
+//       _controller!.seekTo(newPosition > Duration.zero ? newPosition : Duration.zero);
+//       _showControlsTemporarily();
+//     }
+//   }
+//
+//   void _changePlaybackRate(double rate) {
+//     if (_controller != null && !_isDisposing) {
+//       _controller!.setPlaybackRate(rate);
+//       Future.delayed(Duration(milliseconds: 50), () {
+//         if (mounted) {
+//           setState(() {
+//             _playbackRate = rate;
+//           });
+//         }
+//       });
+//       _showControlsTemporarily();
+//     }
+//   }
+//
+//   void _showControlsTemporarily() {
+//     if (_showControls != true) {
+//       setState(() {
+//         _showControls = true;
+//         _previousControlsState = true;
+//       });
+//     }
+//     _startControlsTimer();
+//   }
+//
+//   void _startControlsTimer() {
+//     _controlsTimer?.cancel();
+//     _controlsTimer = Timer(Duration(seconds: 3), () {
+//       if (mounted && !_isDisposing && _isPlaying && _showControls) {
+//         setState(() {
+//           _showControls = false;
+//           _previousControlsState = false;
+//         });
+//       }
+//     });
+//   }
+//
+//   Widget _buildInitialLoader() {
+//     return AnimatedOpacity(
+//       opacity: _showInitialLoader ? 1.0 : 0.0,
+//       duration: Duration(milliseconds: 300),
+//       child: Container(
+//         color: Colors.transparent,
+//         child: Center(
+//           child: Container(
+//             width: 80.w,
+//             height: 80.w,
+//             decoration: BoxDecoration(
+//               color: Colors.white,
+//               shape: BoxShape.circle,
+//               boxShadow: [
+//                 BoxShadow(
+//                   color: Colors.black.withOpacity(0.15),
+//                   blurRadius: 10.w,
+//                   offset: Offset(0, 2.h),
+//                 ),
+//               ],
+//             ),
+//             child: Center(
+//               child: SizedBox(
+//                 width: 32.w,
+//                 height: 32.w,
+//                 child: CircularProgressIndicator(
+//                   strokeWidth: 3.w,
+//                   valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1E88E5)),
+//                   backgroundColor: Colors.grey[100],
+//                 ),
+//               ),
+//             ),
+//           ),
+//         ),
+//       ),
+//     );
+//   }
+//
+//   Widget _buildYouTubeLikeControls() {
+//     return _VideoControlsOverlay(
+//       showControls: _showControls,
+//       isPlaying: _isPlaying,
+//       isMuted: _isMuted,
+//       playbackRate: _playbackRate,
+//       controller: _controller,
+//       // ✅ التعديل: دعم أسماء الحقول المختلفة في Firebase
+//       lessonTitle: widget.lesson['lesson_title'] ??
+//           widget.lesson['title'] ??
+//           'عرض الدرس',
+//       onTogglePlayPause: _togglePlayPause,
+//       onToggleMute: _toggleMute,
+//       onSeekForward: _seekForward,
+//       onSeekBackward: _seekBackward,
+//       onChangePlaybackRate: _changePlaybackRate,
+//       onExit: _onWillPop,
+//     );
+//   }
+//
+//   Widget _buildErrorScreen() {
+//     return Container(
+//       color: Colors.black,
+//       child: Center(
+//         child: Column(
+//           mainAxisAlignment: MainAxisAlignment.center,
+//           children: [
+//             Icon(Icons.error_outline, size: 60.sp, color: Colors.red),
+//             SizedBox(height: 16.h),
+//             Text(
+//               _errorMessage,
+//               style: TextStyle(
+//                 fontSize: 16.sp,
+//                 color: Colors.white,
+//                 fontFamily: 'Tajawal',
+//               ),
+//               textAlign: TextAlign.center,
+//             ),
+//             SizedBox(height: 20.h),
+//             ElevatedButton(
+//               onPressed: () {
+//                 _exitFullScreenMode();
+//                 Navigator.of(context).pop();
+//               },
+//               child: Text(
+//                 'العودة',
+//                 style: TextStyle(fontFamily: 'Tajawal'),
+//               ),
+//               style: ElevatedButton.styleFrom(
+//                 backgroundColor: Colors.red,
+//                 foregroundColor: Colors.white,
+//               ),
+//             ),
+//           ],
+//         ),
+//       ),
+//     );
+//   }
+//
+//   Widget _buildLoadingScreen() {
+//     return Container(
+//       color: Colors.black,
+//       child: Center(
+//         child: Column(
+//           mainAxisAlignment: MainAxisAlignment.center,
+//           children: [
+//             CircularProgressIndicator(color: Colors.red),
+//             SizedBox(height: 16.h),
+//             Text(
+//               'جاري تحميل الفيديو...',
+//               style: TextStyle(
+//                 fontSize: 16.sp,
+//                 color: Colors.white,
+//                 fontFamily: 'Tajawal',
+//               ),
+//             ),
+//           ],
+//         ),
+//       ),
+//     );
+//   }
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     if (_hasError) {
+//       return Directionality(
+//         textDirection: TextDirection.rtl,
+//         child: Scaffold(
+//           backgroundColor: Colors.black,
+//           body: _buildErrorScreen(),
+//         ),
+//       );
+//     }
+//
+//     if (_controller == null && !_hasError) {
+//       return Directionality(
+//         textDirection: TextDirection.rtl,
+//         child: Scaffold(
+//           backgroundColor: Colors.black,
+//           body: _buildLoadingScreen(),
+//         ),
+//       );
+//     }
+//
+//     return Directionality(
+//       textDirection: TextDirection.rtl,
+//       child: WillPopScope(
+//         onWillPop: _onWillPop,
+//         child: GestureDetector(
+//           onTap: () {
+//             if (_showControls != !_showControls) {
+//               setState(() {
+//                 _showControls = !_showControls;
+//               });
+//             }
+//             if (_showControls) {
+//               _startControlsTimer();
+//             }
+//           },
+//           child: Scaffold(
+//             backgroundColor: Colors.black,
+//             body: Stack(
+//               children: [
+//                 if (_isPlayerReady)
+//                   Positioned.fill(
+//                     child: YoutubePlayer(
+//                       controller: _controller!,
+//                       showVideoProgressIndicator: false,
+//                       progressIndicatorColor: Colors.red,
+//                       progressColors: ProgressBarColors(
+//                         playedColor: Colors.red,
+//                         handleColor: Colors.red,
+//                         backgroundColor: Colors.grey[800]!,
+//                       ),
+//                       onReady: () {
+//                         if (mounted && !_isDisposing) {
+//                           setState(() {
+//                             _isPlayerReady = true;
+//                           });
+//                         }
+//                       },
+//                       onEnded: (metaData) {
+//                         if (mounted && !_isDisposing) {
+//                           setState(() {
+//                             _isPlaying = false;
+//                             _showControls = true;
+//                           });
+//                         }
+//                       },
+//                     ),
+//                   ),
+//
+//                 if (_isPlayerReady) _buildYouTubeLikeControls(),
+//
+//                 if (_showInitialLoader) _buildInitialLoader(),
+//               ],
+//             ),
+//           ),
+//         ),
+//       ),
+//     );
+//   }
+//
+//   @override
+//   void dispose() {
+//     _isDisposing = true;
+//     _controlsTimer?.cancel();
+//     _stopVideoBeforeExit();
+//     _exitFullScreenMode();
+//
+//     Future.delayed(Duration(milliseconds: 100)).then((_) {
+//       _controller?.removeListener(_optimizedVideoListener);
+//       _controller?.dispose();
+//     });
+//
+//     super.dispose();
+//   }
+// }
+//
+// class _VideoControlsOverlay extends StatelessWidget {
+//   final bool showControls;
+//   final bool isPlaying;
+//   final bool isMuted;
+//   final double playbackRate;
+//   final YoutubePlayerController? controller;
+//   final String lessonTitle;
+//   final VoidCallback onTogglePlayPause;
+//   final VoidCallback onToggleMute;
+//   final Function(int) onSeekForward;
+//   final Function(int) onSeekBackward;
+//   final Function(double) onChangePlaybackRate;
+//   final Future<bool> Function() onExit;
+//
+//   const _VideoControlsOverlay({
+//     required this.showControls,
+//     required this.isPlaying,
+//     required this.isMuted,
+//     required this.playbackRate,
+//     required this.controller,
+//     required this.lessonTitle,
+//     required this.onTogglePlayPause,
+//     required this.onToggleMute,
+//     required this.onSeekForward,
+//     required this.onSeekBackward,
+//     required this.onChangePlaybackRate,
+//     required this.onExit,
+//   });
+//
+//   String _formatDuration(Duration duration) {
+//     String twoDigits(int n) => n.toString().padLeft(2, "0");
+//     String twoDigitMinutes = twoDigits(duration.inMinutes.remainder(60));
+//     String twoDigitSeconds = twoDigits(duration.inSeconds.remainder(60));
+//     if (duration.inHours > 0) {
+//       return "${twoDigits(duration.inHours)}:$twoDigitMinutes:$twoDigitSeconds";
+//     } else {
+//       return "$twoDigitMinutes:$twoDigitSeconds";
+//     }
+//   }
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     return AnimatedOpacity(
+//       opacity: showControls ? 1.0 : 0.0,
+//       duration: Duration(milliseconds: 300),
+//       child: Container(
+//         color: Colors.transparent,
+//         child: Stack(
+//           children: [
+//             // التحكم السفلي
+//             Positioned(
+//               bottom: 0,
+//               left: 0,
+//               right: 0,
+//               child: Container(
+//                 height: 80.h,
+//                 decoration: BoxDecoration(
+//                   gradient: LinearGradient(
+//                     begin: Alignment.bottomCenter,
+//                     end: Alignment.topCenter,
+//                     colors: [
+//                       Colors.black.withOpacity(0.8),
+//                       Colors.transparent,
+//                     ],
+//                   ),
+//                 ),
+//                 child: Column(
+//                   children: [
+//                     // شريط التقدم
+//                     Container(
+//                       height: 3.h,
+//                       child: ProgressBar(
+//                         isExpanded: true,
+//                         controller: controller!,
+//                         colors: ProgressBarColors(
+//                           playedColor: Colors.red,
+//                           handleColor: Colors.red,
+//                           backgroundColor: Colors.grey[800]!,
+//                         ),
+//                       ),
+//                     ),
+//                     SizedBox(height: 8.h),
+//
+//                     // أزرار التحكم
+//                     Expanded(
+//                       child: Padding(
+//                         padding: EdgeInsets.symmetric(horizontal: 16.w),
+//                         child: Row(
+//                           children: [
+//                             IconButton(
+//                               onPressed: onTogglePlayPause,
+//                               icon: Icon(
+//                                 isPlaying ? Icons.pause : Icons.play_arrow,
+//                                 color: Colors.white,
+//                                 size: 24.sp,
+//                               ),
+//                             ),
+//
+//                             Text(
+//                               _formatDuration(controller?.value.position ?? Duration.zero),
+//                               style: TextStyle(
+//                                 color: Colors.white,
+//                                 fontSize: 12.sp,
+//                               ),
+//                             ),
+//
+//                             IconButton(
+//                               onPressed: onToggleMute,
+//                               icon: Icon(
+//                                 isMuted ? Icons.volume_off : Icons.volume_up,
+//                                 color: Colors.white,
+//                                 size: 20.sp,
+//                               ),
+//                             ),
+//
+//                             PopupMenuButton<double>(
+//                               icon: Icon(
+//                                 Icons.settings,
+//                                 color: Colors.white,
+//                                 size: 20.sp,
+//                               ),
+//                               onSelected: onChangePlaybackRate,
+//                               itemBuilder: (context) => [
+//                                 PopupMenuItem(value: 0.5, child: Text('0.5x')),
+//                                 PopupMenuItem(value: 0.75, child: Text('0.75x')),
+//                                 PopupMenuItem(value: 1.0, child: Text('عادي (1.0x)')),
+//                                 PopupMenuItem(value: 1.25, child: Text('1.25x')),
+//                                 PopupMenuItem(value: 1.5, child: Text('1.5x')),
+//                                 PopupMenuItem(value: 1.75, child: Text('1.75x')),
+//                                 PopupMenuItem(value: 2.0, child: Text('2.0x')),
+//                               ],
+//                             ),
+//
+//                             Spacer(),
+//
+//                             Text(
+//                               '-${_formatDuration((controller?.value.metaData.duration ?? Duration.zero) - (controller?.value.position ?? Duration.zero))}',
+//                               style: TextStyle(
+//                                 color: Colors.white,
+//                                 fontSize: 12.sp,
+//                               ),
+//                             ),
+//
+//                             SizedBox(width: 16.w),
+//
+//                             IconButton(
+//                               onPressed: () async {
+//                                 if (await onExit()) {
+//                                   Navigator.of(context).pop();
+//                                 }
+//                               },
+//                               icon: Icon(
+//                                 Icons.fullscreen_exit,
+//                                 color: Colors.white,
+//                                 size: 24.sp,
+//                               ),
+//                             ),
+//                           ],
+//                         ),
+//                       ),
+//                     ),
+//                   ],
+//                 ),
+//               ),
+//             ),
+//
+//             // التحكم العلوي
+//             Positioned(
+//               top: 0,
+//               left: 0,
+//               right: 0,
+//               child: AnimatedOpacity(
+//                 opacity: showControls ? 1.0 : 0.0,
+//                 duration: Duration(milliseconds: 300),
+//                 child: Container(
+//                   height: 60.h,
+//                   decoration: BoxDecoration(
+//                     gradient: LinearGradient(
+//                       begin: Alignment.topCenter,
+//                       end: Alignment.bottomCenter,
+//                       colors: [
+//                         Colors.black.withOpacity(0.8),
+//                         Colors.transparent,
+//                       ],
+//                     ),
+//                   ),
+//                   child: Row(
+//                     children: [
+//                       IconButton(
+//                         onPressed: () async {
+//                           if (await onExit()) {
+//                             Navigator.of(context).pop();
+//                           }
+//                         },
+//                         icon: Icon(
+//                           Icons.arrow_back,
+//                           color: Colors.white,
+//                           size: 24.sp,
+//                         ),
+//                       ),
+//
+//                       Expanded(
+//                         child: Text(
+//                           lessonTitle,
+//                           style: TextStyle(
+//                             color: Colors.white,
+//                             fontSize: 16.sp,
+//                             fontWeight: FontWeight.w500,
+//                             fontFamily: 'Tajawal',
+//                           ),
+//                           maxLines: 1,
+//                           overflow: TextOverflow.ellipsis,
+//                         ),
+//                       ),
+//
+//                       IconButton(
+//                         onPressed: () => onSeekBackward(10),
+//                         icon: Icon(
+//                           Icons.replay_10,
+//                           color: Colors.white,
+//                           size: 24.sp,
+//                         ),
+//                       ),
+//
+//                       IconButton(
+//                         onPressed: () => onSeekForward(10),
+//                         icon: Icon(
+//                           Icons.forward_10,
+//                           color: Colors.white,
+//                           size: 24.sp,
+//                         ),
+//                       ),
+//                     ],
+//                   ),
+//                 ),
+//               ),
+//             ),
+//           ],
+//         ),
+//       ),
+//     );
+//   }
+// }
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -25,42 +2037,41 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
   bool _hasError = false;
   String _errorMessage = '';
   bool _isMuted = false;
-  double _volume = 100;
   bool _isPlaying = false;
   double _playbackRate = 1.0;
-  bool _isFullScreen = false;
-  bool _isLoading = true;
-  bool _isVideoLoading = true;
-  Duration _currentPosition = Duration.zero;
-  Duration _totalDuration = Duration.zero;
+  bool _isDisposing = false;
+  bool _showControls = true;
+  Timer? _controlsTimer;
+  bool _previousPlayingState = false;
+  bool _previousControlsState = true;
+  bool _isFirstPlay = true;
+  bool _showInitialLoader = true;
 
   @override
   void initState() {
     super.initState();
+    _initializeScreen();
+  }
+
+  void _initializeScreen() {
+    _enterFullScreenMode();
     _initializeYouTubePlayer();
-    // الانتقال مباشرة إلى وضع ملء الشاشة والوضع الأفقي
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _enterFullScreen();
-    });
+    _startControlsTimer();
   }
 
-  void _enterFullScreen() {
+  void _enterFullScreenMode() {
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
     SystemChrome.setPreferredOrientations([
-      DeviceOrientation.landscapeLeft,
       DeviceOrientation.landscapeRight,
+      DeviceOrientation.landscapeLeft,
     ]);
-    setState(() {
-      _isFullScreen = true;
-    });
   }
 
-  void _exitFullScreen() {
+  void _exitFullScreenMode() {
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
     ]);
-    setState(() {
-      _isFullScreen = false;
-    });
   }
 
   void _initializeYouTubePlayer() {
@@ -74,46 +2085,22 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
           _controller = YoutubePlayerController(
             initialVideoId: videoId,
             flags: const YoutubePlayerFlags(
-              autoPlay: true, // التشغيل التلقائي
+              autoPlay: true,
               mute: false,
-              enableCaption: false, // تعطيل الترجمة
-              hideControls: true, // إخفاء عناصر التحكم الافتراضية
+              enableCaption: false,
+              hideControls: true,
               controlsVisibleAtStart: false,
               useHybridComposition: true,
               disableDragSeek: false,
               loop: false,
               isLive: false,
               forceHD: true,
+              startAt: 0,
             ),
           );
 
-          _controller!.addListener(_videoListener);
-
-          // تحديث الموقع الحالي والمدة الكلية
-          _controller!.addListener(() {
-            if (mounted) {
-              setState(() {
-                _currentPosition = _controller!.value.position;
-                _totalDuration = _controller!.metadata.duration;
-
-                // إخفاء مؤشر التحميل عندما يبدأ الفيديو
-                if (_controller!.value.isPlaying && _isVideoLoading) {
-                  setState(() {
-                    _isVideoLoading = false;
-                  });
-                }
-              });
-            }
-          });
-
-          // إخفاء مؤشر التحميل الرئيسي بعد تهيئة المشغل
-          Future.delayed(const Duration(milliseconds: 500), () {
-            if (mounted) {
-              setState(() {
-                _isLoading = false;
-              });
-            }
-          });
+          _controller!.addListener(_optimizedVideoListener);
+          _preloadVideo();
 
         } else {
           _setErrorState('رابط الفيديو غير صالح');
@@ -126,574 +2113,345 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
     }
   }
 
-  void _videoListener() {
-    if (_controller != null && mounted) {
+  void _preloadVideo() {
+    if (_controller != null && !_isDisposing && mounted) {
       setState(() {
-        _isPlaying = _controller!.value.isPlaying;
-        _currentPosition = _controller!.value.position;
-        _totalDuration = _controller!.metadata.duration;
+        _isPlayerReady = true;
+      });
+    }
+  }
+
+  void _optimizedVideoListener() {
+    if (!mounted || _isDisposing || _controller == null) return;
+
+    final currentPlayingState = _controller!.value.isPlaying;
+
+    if (currentPlayingState != _previousPlayingState) {
+      _previousPlayingState = currentPlayingState;
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && !_isDisposing) {
+          setState(() {
+            _isPlaying = currentPlayingState;
+
+            if (_isPlaying && _showInitialLoader) {
+              _showInitialLoader = false;
+            }
+
+            if (_isPlaying && _isFirstPlay) {
+              _isFirstPlay = false;
+              Future.delayed(const Duration(seconds: 2), () {
+                if (mounted && !_isDisposing) {
+                  setState(() {
+                    _showControls = false;
+                  });
+                }
+              });
+            }
+          });
+        }
       });
     }
   }
 
   void _setErrorState(String message) {
-    if (mounted) {
+    if (mounted && !_isDisposing) {
       setState(() {
         _hasError = true;
         _errorMessage = message;
         _isPlayerReady = false;
-        _isLoading = false;
-        _isVideoLoading = false;
+        _showInitialLoader = false;
       });
     }
   }
 
+  void _stopVideoBeforeExit() {
+    if (_controller != null && _isPlayerReady) {
+      _controller!.pause();
+      _controller!.seekTo(Duration.zero);
+    }
+  }
+
+  Future<bool> _onWillPop() async {
+    _exitFullScreenMode();
+    _stopVideoBeforeExit();
+    await Future.delayed(const Duration(milliseconds: 100));
+    return true;
+  }
+
   void _togglePlayPause() {
-    if (_isPlayerReady && _controller != null) {
+    if (_isPlayerReady && _controller != null && !_isDisposing) {
       if (_controller!.value.isPlaying) {
         _controller!.pause();
       } else {
         _controller!.play();
       }
+      _showControlsTemporarily();
     }
   }
 
   void _toggleMute() {
-    if (_controller != null) {
+    if (_controller != null && !_isDisposing) {
       if (_isMuted) {
         _controller!.unMute();
-        setState(() {
-          _isMuted = false;
-          _volume = 100;
-        });
       } else {
         _controller!.mute();
-        setState(() {
-          _isMuted = true;
-          _volume = 0;
-        });
       }
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          setState(() {
+            _isMuted = !_isMuted;
+          });
+        }
+      });
+      _showControlsTemporarily();
     }
   }
 
   void _seekForward(int seconds) {
-    if (_controller != null) {
-      final newPosition = _currentPosition + Duration(seconds: seconds);
+    if (_controller != null && !_isDisposing) {
+      final newPosition = _controller!.value.position + Duration(seconds: seconds);
       _controller!.seekTo(newPosition);
+      _showControlsTemporarily();
     }
   }
 
   void _seekBackward(int seconds) {
-    if (_controller != null) {
-      final newPosition = _currentPosition - Duration(seconds: seconds);
+    if (_controller != null && !_isDisposing) {
+      final newPosition = _controller!.value.position - Duration(seconds: seconds);
       _controller!.seekTo(newPosition > Duration.zero ? newPosition : Duration.zero);
+      _showControlsTemporarily();
     }
   }
 
   void _changePlaybackRate(double rate) {
-    if (_controller != null) {
+    if (_controller != null && !_isDisposing) {
       _controller!.setPlaybackRate(rate);
-      setState(() {
-        _playbackRate = rate;
+      Future.delayed(const Duration(milliseconds: 50), () {
+        if (mounted) {
+          setState(() {
+            _playbackRate = rate;
+          });
+        }
       });
+      _showControlsTemporarily();
     }
   }
 
-  void _changeVolume(double volume) {
-    setState(() {
-      _volume = volume;
-      _isMuted = volume == 0;
+  void _showControlsTemporarily() {
+    if (_showControls != true) {
+      setState(() {
+        _showControls = true;
+        _previousControlsState = true;
+      });
+    }
+    _startControlsTimer();
+  }
+
+  void _startControlsTimer() {
+    _controlsTimer?.cancel();
+    _controlsTimer = Timer(const Duration(seconds: 3), () {
+      if (mounted && !_isDisposing && _isPlaying && _showControls) {
+        setState(() {
+          _showControls = false;
+          _previousControlsState = false;
+        });
+      }
     });
   }
 
-  void _onVolumeChangeEnd(double volume) {
-    if (_controller != null) {
-      _controller!.setVolume(volume.round());
-    }
-  }
-
-  void _onSeekBarChange(double value) {
-    if (_controller != null) {
-      final newPosition = value * _totalDuration.inMilliseconds;
-      _controller!.seekTo(Duration(milliseconds: newPosition.round()));
-    }
-  }
-
-  Widget _buildCustomProgressBar() {
-    final double progress = _totalDuration.inMilliseconds > 0
-        ? _currentPosition.inMilliseconds / _totalDuration.inMilliseconds
-        : 0.0;
-
-    return Container(
-      height: 40.h,
-      padding: EdgeInsets.symmetric(horizontal: 16.w),
-      child: Column(
-        children: [
-          // شريط التقدم
-          Slider(
-            value: progress,
-            onChanged: _onSeekBarChange,
-            onChangeStart: (_) {
-              if (_controller != null && _controller!.value.isPlaying) {
-                _controller!.pause();
-              }
-            },
-            onChangeEnd: (_) {
-              if (_controller != null && !_controller!.value.isPlaying) {
-                _controller!.play();
-              }
-            },
-            activeColor: const Color(0xFF1E88E5),
-            inactiveColor: Colors.white54,
-          ),
-
-          // الوقت الحالي والوقت المتبقي
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 8.w),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  _formatDuration(_currentPosition),
-                  style: TextStyle(color: Colors.white, fontSize: 12.sp),
-                ),
-                Text(
-                  _formatDuration(_totalDuration),
-                  style: TextStyle(color: Colors.white, fontSize: 12.sp),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLoadingSpinner() {
-    return Center(
-      child: Container(
-        width: 120.w,
-        height: 120.w,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.3),
-              blurRadius: 15.w,
-              spreadRadius: 2.w,
-            ),
-          ],
-        ),
-        child: Stack(
-          children: [
-            // دائرة التقدم الدائرية
-            CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(const Color(0xFF1E88E5)),
-              strokeWidth: 4.w,
-              backgroundColor: Colors.grey[200],
-            ),
-            // أيقونة مركزية
-            Center(
-              child: Icon(
-                Icons.play_arrow_rounded,
-                color: const Color(0xFF1E88E5),
-                size: 40.sp,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildVideoLoadingOverlay() {
+  Widget _buildInitialLoader() {
     return AnimatedOpacity(
-      opacity: _isVideoLoading ? 1.0 : 0.0,
+      opacity: _showInitialLoader ? 1.0 : 0.0,
       duration: const Duration(milliseconds: 300),
       child: Container(
-        color: Colors.black.withOpacity(0.7),
+        color: Colors.transparent,
         child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _buildLoadingSpinner(),
-              SizedBox(height: 20.h),
-              Text(
-                'جاري تحميل الفيديو...',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.bold,
+          child: Container(
+            width: 120.w,
+            height: 120.w,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.3),
+                  blurRadius: 15.w,
+                  spreadRadius: 2.w,
                 ),
-              ),
-              SizedBox(height: 8.h),
-              Text(
-                'يرجى الانتظار حتى بدء التشغيل',
-                style: TextStyle(
-                  color: Colors.white70,
-                  fontSize: 14.sp,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFullScreenControls() {
-    return Stack(
-      children: [
-        // عناصر التحكم العلوية
-        Positioned(
-          top: 0,
-          left: 0,
-          right: 0,
-          child: AnimatedOpacity(
-            opacity: _isVideoLoading ? 0.0 : 1.0,
-            duration: const Duration(milliseconds: 300),
-            child: Container(
-              height: 60.h,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.black.withOpacity(0.7),
-                    Colors.transparent,
-                  ],
-                ),
-              ),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: Icon(Icons.arrow_back, color: Colors.white, size: 24.sp),
-                    onPressed: () {
-                      _exitFullScreen();
-                      Navigator.pop(context);
-                    },
-                  ),
-                  Expanded(
-                    child: Text(
-                      widget.lesson['lesson_title'] ?? 'عرض الدرس',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.fullscreen_exit, color: Colors.white, size: 24.sp),
-                    onPressed: _exitFullScreen,
-                  ),
-                ],
-              ),
+              ],
             ),
-          ),
-        ),
-
-        // عناصر التحكم المركزية
-        Positioned.fill(
-          child: AnimatedOpacity(
-            opacity: _isVideoLoading ? 0.0 : 1.0,
-            duration: const Duration(milliseconds: 300),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            child: Stack(
               children: [
-                // زر الرجوع 10 ثواني
-                GestureDetector(
-                  onTap: () => _seekBackward(10),
-                  child: Container(
-                    width: 80.w,
-                    color: Colors.transparent,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.replay_10, color: Colors.white, size: 40.sp),
-                        Text('10', style: TextStyle(color: Colors.white, fontSize: 12.sp)),
-                      ],
-                    ),
-                  ),
+                CircularProgressIndicator(
+                  valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF1E88E5)),
+                  strokeWidth: 4.w,
+                  backgroundColor: Colors.grey[200],
                 ),
-
-                // زر التشغيل/الإيقاف
-                GestureDetector(
-                  onTap: _togglePlayPause,
-                  child: Container(
-                    width: 80.w,
-                    color: Colors.transparent,
-                    child: Icon(
-                      _isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled,
-                      color: Colors.white,
-                      size: 60.sp,
-                    ),
-                  ),
-                ),
-
-                // زر التقدم 10 ثواني
-                GestureDetector(
-                  onTap: () => _seekForward(10),
-                  child: Container(
-                    width: 80.w,
-                    color: Colors.transparent,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.forward_10, color: Colors.white, size: 40.sp),
-                        Text('10', style: TextStyle(color: Colors.white, fontSize: 12.sp)),
-                      ],
-                    ),
+                Center(
+                  child: Icon(
+                    Icons.play_arrow_rounded,
+                    color: const Color(0xFF1E88E5),
+                    size: 40.sp,
                   ),
                 ),
               ],
             ),
           ),
         ),
-
-        // عناصر التحكم السفلية
-        Positioned(
-          bottom: 0,
-          left: 0,
-          right: 0,
-          child: AnimatedOpacity(
-            opacity: _isVideoLoading ? 0.0 : 1.0,
-            duration: const Duration(milliseconds: 300),
-            child: Container(
-              height: 100.h,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.bottomCenter,
-                  end: Alignment.topCenter,
-                  colors: [
-                    Colors.black.withOpacity(0.7),
-                    Colors.transparent,
-                  ],
-                ),
-              ),
-              child: Column(
-                children: [
-                  // شريط التقدم المخصص
-                  _buildCustomProgressBar(),
-
-                  // عناصر التحكم السفلية
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-                    child: Row(
-                      children: [
-                        // زر الصوت
-                        Row(
-                          children: [
-                            IconButton(
-                              icon: Icon(
-                                _isMuted ? Icons.volume_off : Icons.volume_up,
-                                color: Colors.white,
-                                size: 20.sp,
-                              ),
-                              onPressed: _toggleMute,
-                            ),
-                            SizedBox(width: 8.w),
-                            SizedBox(
-                              width: 80.w,
-                              child: Slider(
-                                value: _volume,
-                                min: 0,
-                                max: 100,
-                                onChanged: _changeVolume,
-                                onChangeEnd: _onVolumeChangeEnd,
-                                activeColor: Colors.white,
-                                inactiveColor: Colors.white54,
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        const Spacer(),
-
-                        // زر سرعة التشغيل
-                        PopupMenuButton<double>(
-                          icon: Icon(Icons.speed, color: Colors.white, size: 20.sp),
-                          onSelected: _changePlaybackRate,
-                          itemBuilder: (context) => [
-                            PopupMenuItem(value: 0.25, child: Text('0.25x')),
-                            PopupMenuItem(value: 0.5, child: Text('0.5x')),
-                            PopupMenuItem(value: 0.75, child: Text('0.75x')),
-                            PopupMenuItem(value: 1.0, child: Text('عادي (1.0x)')),
-                            PopupMenuItem(value: 1.25, child: Text('1.25x')),
-                            PopupMenuItem(value: 1.5, child: Text('1.5x')),
-                            PopupMenuItem(value: 1.75, child: Text('1.75x')),
-                            PopupMenuItem(value: 2.0, child: Text('2.0x')),
-                          ],
-                        ),
-
-                        // زر الإعدادات (مع تعطيل الترجمة)
-                        PopupMenuButton<String>(
-                          icon: Icon(Icons.more_vert, color: Colors.white, size: 20.sp),
-                          onSelected: (value) {
-                            if (value == 'quality') {
-                              // يمكن إضافة اختيار الجودة هنا
-                            }
-                          },
-                          itemBuilder: (context) => [
-                            const PopupMenuItem(value: 'quality', child: Text('جودة الفيديو')),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-
-        // مؤشر تحميل الفيديو
-        if (_isVideoLoading) _buildVideoLoadingOverlay(),
-      ],
+      ),
     );
   }
 
-  String _formatDuration(Duration duration) {
-    String twoDigits(int n) => n.toString().padLeft(2, '0');
-    final hours = duration.inHours;
-    final minutes = duration.inMinutes.remainder(60);
-    final seconds = duration.inSeconds.remainder(60);
+  Widget _buildYouTubeLikeControls() {
+    return _VideoControlsOverlay(
+      showControls: _showControls,
+      isPlaying: _isPlaying,
+      isMuted: _isMuted,
+      playbackRate: _playbackRate,
+      controller: _controller,
+      lessonTitle: widget.lesson['lesson_title'] ?? 'عرض الدرس',
+      onTogglePlayPause: _togglePlayPause,
+      onToggleMute: _toggleMute,
+      onSeekForward: _seekForward,
+      onSeekBackward: _seekBackward,
+      onChangePlaybackRate: _changePlaybackRate,
+      onExit: _onWillPop,
+    );
+  }
 
-    if (hours > 0) {
-      return '$hours:${twoDigits(minutes)}:${twoDigits(seconds)}';
-    } else {
-      return '${twoDigits(minutes)}:${twoDigits(seconds)}';
-    }
+  Widget _buildErrorScreen() {
+    return Container(
+      color: Colors.black,
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error_outline, size: 60.sp, color: Colors.red),
+            SizedBox(height: 16.h),
+            Text(
+              _errorMessage,
+              style: TextStyle(
+                fontSize: 16.sp,
+                color: Colors.white,
+                fontFamily: 'Tajawal',
+              ),
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: 20.h),
+            ElevatedButton(
+              onPressed: _initializeYouTubePlayer,
+              child: const Text('إعادة المحاولة'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF1E88E5),
+                foregroundColor: Colors.white,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLoadingScreen() {
+    return Container(
+      color: Colors.black,
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _buildInitialLoader(),
+            SizedBox(height: 20.h),
+            Text(
+              'جاري تحميل الفيديو...',
+              style: TextStyle(
+                fontSize: 16.sp,
+                color: Colors.white,
+                fontFamily: 'Tajawal',
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     if (_hasError) {
-      return Scaffold(
-        backgroundColor: Colors.black,
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.error_outline, size: 60.sp, color: Colors.red),
-              SizedBox(height: 16.h),
-              Text(
-                _errorMessage,
-                style: TextStyle(
-                  fontSize: 16.sp,
-                  color: Colors.white,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              SizedBox(height: 20.h),
-              ElevatedButton(
-                onPressed: _initializeYouTubePlayer,
-                child: const Text('إعادة المحاولة'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1E88E5),
-                  foregroundColor: Colors.white,
-                ),
-              ),
-            ],
-          ),
+      return Directionality(
+        textDirection: TextDirection.rtl,
+        child: Scaffold(
+          backgroundColor: Colors.black,
+          body: _buildErrorScreen(),
         ),
       );
     }
 
-    if (_controller == null) {
-      return Scaffold(
-        backgroundColor: Colors.black,
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _buildLoadingSpinner(),
-              SizedBox(height: 20.h),
-              Text(
-                'جاري تهيئة مشغل الفيديو...',
-                style: TextStyle(
-                  fontSize: 16.sp,
-                  color: Colors.white,
-                ),
-              ),
-            ],
-          ),
+    if (_controller == null && !_hasError) {
+      return Directionality(
+        textDirection: TextDirection.rtl,
+        child: Scaffold(
+          backgroundColor: Colors.black,
+          body: _buildLoadingScreen(),
         ),
       );
     }
 
-    return WillPopScope(
-      onWillPop: () async {
-        _exitFullScreen();
-        Navigator.pop(context);
-        return false;
-      },
-      child: Scaffold(
-        backgroundColor: Colors.black,
-        body: Stack(
-          children: [
-            // مشغل اليوتيوب
-            Positioned.fill(
-              child: YoutubePlayer(
-                controller: _controller!,
-                showVideoProgressIndicator: true,
-                progressIndicatorColor: const Color(0xFF1E88E5),
-                progressColors: const ProgressBarColors(
-                  playedColor: Color(0xFF1E88E5),
-                  handleColor: Color(0xFF1E88E5),
-                  backgroundColor: Colors.white54,
-                ),
-                onReady: () {
-                  setState(() {
-                    _isPlayerReady = true;
-                  });
-                },
-                onEnded: (metaData) {
-                  // العودة إلى البداية عند انتهاء الفيديو
-                  _controller!.seekTo(Duration.zero);
-                  _controller!.pause();
-                  setState(() {
-                    _isPlaying = false;
-                  });
-                },
-                bottomActions: [
-                  CurrentPosition(),
-                  ProgressBar(isExpanded: true),
-                  RemainingDuration(),
-                  FullScreenButton(),
-                ],
-              ),
-            ),
-
-            // عناصر التحكم المخصصة
-            if (_isPlayerReady) _buildFullScreenControls(),
-
-            // مؤشر التحميل الرئيسي
-            if (_isLoading)
-              Positioned.fill(
-                child: Container(
-                  color: Colors.black,
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        _buildLoadingSpinner(),
-                        SizedBox(height: 20.h),
-                        Text(
-                          'جاري تحميل المشغل...',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 16.sp,
-                          ),
-                        ),
-                      ],
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: WillPopScope(
+        onWillPop: _onWillPop,
+        child: GestureDetector(
+          onTap: () {
+            if (_showControls != !_showControls) {
+              setState(() {
+                _showControls = !_showControls;
+              });
+            }
+            if (_showControls) {
+              _startControlsTimer();
+            }
+          },
+          child: Scaffold(
+            backgroundColor: Colors.black,
+            body: Stack(
+              children: [
+                if (_isPlayerReady)
+                  Positioned.fill(
+                    child: YoutubePlayer(
+                      controller: _controller!,
+                      showVideoProgressIndicator: false,
+                      progressIndicatorColor: const Color(0xFF1E88E5),
+                      progressColors: const ProgressBarColors(
+                        playedColor: Color(0xFF1E88E5),
+                        handleColor: Color(0xFF1E88E5),
+                        backgroundColor: Colors.white54,
+                      ),
+                      onReady: () {
+                        if (mounted && !_isDisposing) {
+                          setState(() {
+                            _isPlayerReady = true;
+                          });
+                        }
+                      },
+                      onEnded: (metaData) {
+                        if (mounted && !_isDisposing) {
+                          setState(() {
+                            _isPlaying = false;
+                            _showControls = true;
+                          });
+                        }
+                      },
                     ),
                   ),
-                ),
-              ),
-          ],
+
+                if (_isPlayerReady) _buildYouTubeLikeControls(),
+
+                if (_showInitialLoader) _buildInitialLoader(),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -701,11 +2459,293 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
 
   @override
   void dispose() {
-    _controller?.dispose();
-    // استعادة الوضع العمودي عند الخروج
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-    ]);
+    _isDisposing = true;
+    _controlsTimer?.cancel();
+    _stopVideoBeforeExit();
+    _exitFullScreenMode();
+
+    Future.delayed(const Duration(milliseconds: 100)).then((_) {
+      _controller?.removeListener(_optimizedVideoListener);
+      _controller?.dispose();
+    });
+
     super.dispose();
+  }
+}
+
+class _VideoControlsOverlay extends StatelessWidget {
+  final bool showControls;
+  final bool isPlaying;
+  final bool isMuted;
+  final double playbackRate;
+  final YoutubePlayerController? controller;
+  final String lessonTitle;
+  final VoidCallback onTogglePlayPause;
+  final VoidCallback onToggleMute;
+  final Function(int) onSeekForward;
+  final Function(int) onSeekBackward;
+  final Function(double) onChangePlaybackRate;
+  final Future<bool> Function() onExit;
+
+  const _VideoControlsOverlay({
+    required this.showControls,
+    required this.isPlaying,
+    required this.isMuted,
+    required this.playbackRate,
+    required this.controller,
+    required this.lessonTitle,
+    required this.onTogglePlayPause,
+    required this.onToggleMute,
+    required this.onSeekForward,
+    required this.onSeekBackward,
+    required this.onChangePlaybackRate,
+    required this.onExit,
+  });
+
+  String _formatDuration(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, "0");
+    String twoDigitMinutes = twoDigits(duration.inMinutes.remainder(60));
+    String twoDigitSeconds = twoDigits(duration.inSeconds.remainder(60));
+    if (duration.inHours > 0) {
+      return "${twoDigits(duration.inHours)}:$twoDigitMinutes:$twoDigitSeconds";
+    } else {
+      return "$twoDigitMinutes:$twoDigitSeconds";
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedOpacity(
+      opacity: showControls ? 1.0 : 0.0,
+      duration: const Duration(milliseconds: 300),
+      child: Container(
+        color: Colors.transparent,
+        child: Stack(
+          children: [
+            // التحكم العلوي
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: Container(
+                height: 60.h,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.black.withOpacity(0.8),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    IconButton(
+                      onPressed: () async {
+                        if (await onExit()) {
+                          Navigator.of(context).pop();
+                        }
+                      },
+                      icon: Icon(
+                        Icons.arrow_back,
+                        color: Colors.white,
+                        size: 24.sp,
+                      ),
+                    ),
+                    Expanded(
+                      child: Text(
+                        lessonTitle,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w500,
+                          fontFamily: 'Tajawal',
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => onSeekBackward(10),
+                      icon: Icon(
+                        Icons.replay_10,
+                        color: Colors.white,
+                        size: 24.sp,
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => onSeekForward(10),
+                      icon: Icon(
+                        Icons.forward_10,
+                        color: Colors.white,
+                        size: 24.sp,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // التحكم المركزي
+            Positioned.fill(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  GestureDetector(
+                    onTap: () => onSeekBackward(10),
+                    child: Container(
+                      width: 80.w,
+                      color: Colors.transparent,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.replay_10, color: Colors.white, size: 40.sp),
+                          Text('10', style: TextStyle(color: Colors.white, fontSize: 12.sp)),
+                        ],
+                      ),
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: onTogglePlayPause,
+                    child: Container(
+                      width: 80.w,
+                      color: Colors.transparent,
+                      child: Icon(
+                        isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled,
+                        color: Colors.white,
+                        size: 60.sp,
+                      ),
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () => onSeekForward(10),
+                    child: Container(
+                      width: 80.w,
+                      color: Colors.transparent,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.forward_10, color: Colors.white, size: 40.sp),
+                          Text('10', style: TextStyle(color: Colors.white, fontSize: 12.sp)),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // التحكم السفلي
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: Container(
+                height: 100.h,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.bottomCenter,
+                    end: Alignment.topCenter,
+                    colors: [
+                      Colors.black.withOpacity(0.8),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    Container(
+                      height: 3.h,
+                      child: ProgressBar(
+                        isExpanded: true,
+                        controller: controller!,
+                        colors: const ProgressBarColors(
+                          playedColor: Color(0xFF1E88E5),
+                          handleColor: Color(0xFF1E88E5),
+                          backgroundColor: Colors.white54,
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 8.h),
+                    Expanded(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 16.w),
+                        child: Row(
+                          children: [
+                            IconButton(
+                              onPressed: onTogglePlayPause,
+                              icon: Icon(
+                                isPlaying ? Icons.pause : Icons.play_arrow,
+                                color: Colors.white,
+                                size: 24.sp,
+                              ),
+                            ),
+                            Text(
+                              _formatDuration(controller?.value.position ?? Duration.zero),
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12.sp,
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: onToggleMute,
+                              icon: Icon(
+                                isMuted ? Icons.volume_off : Icons.volume_up,
+                                color: Colors.white,
+                                size: 20.sp,
+                              ),
+                            ),
+                            PopupMenuButton<double>(
+                              icon: Icon(
+                                Icons.speed,
+                                color: Colors.white,
+                                size: 20.sp,
+                              ),
+                              onSelected: onChangePlaybackRate,
+                              itemBuilder: (context) => [
+                                const PopupMenuItem(value: 0.25, child: Text('0.25x')),
+                                const PopupMenuItem(value: 0.5, child: Text('0.5x')),
+                                const PopupMenuItem(value: 0.75, child: Text('0.75x')),
+                                const PopupMenuItem(value: 1.0, child: Text('عادي (1.0x)')),
+                                const PopupMenuItem(value: 1.25, child: Text('1.25x')),
+                                const PopupMenuItem(value: 1.5, child: Text('1.5x')),
+                                const PopupMenuItem(value: 1.75, child: Text('1.75x')),
+                                const PopupMenuItem(value: 2.0, child: Text('2.0x')),
+                              ],
+                            ),
+                            const Spacer(),
+                            Text(
+                              '-${_formatDuration((controller?.value.metaData.duration ?? Duration.zero) - (controller?.value.position ?? Duration.zero))}',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12.sp,
+                              ),
+                            ),
+                            SizedBox(width: 16.w),
+                            IconButton(
+                              onPressed: () async {
+                                if (await onExit()) {
+                                  Navigator.of(context).pop();
+                                }
+                              },
+                              icon: Icon(
+                                Icons.fullscreen_exit,
+                                color: Colors.white,
+                                size: 24.sp,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
