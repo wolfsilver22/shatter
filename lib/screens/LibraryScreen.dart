@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class LibraryScreen extends StatefulWidget {
   const LibraryScreen({Key? key}) : super(key: key);
@@ -26,11 +27,20 @@ class _LibraryScreenState extends State<LibraryScreen> with TickerProviderStateM
   late Animation<Offset> _slideAnimation;
 
   String _selectedTab = 'library'; // 'library' أو 'offers'
+  bool _isLoading = true;
+  bool _isRefreshing = false;
+
+  // Reference to Firestore collection
+  final CollectionReference _offersCollection =
+  FirebaseFirestore.instance.collection('offers');
+
+  List<Map<String, dynamic>> _offers = [];
 
   @override
   void initState() {
     super.initState();
     _initAnimations();
+    _loadOffers();
   }
 
   void _initAnimations() {
@@ -71,6 +81,54 @@ class _LibraryScreenState extends State<LibraryScreen> with TickerProviderStateM
     });
   }
 
+  // دالة لتحميل العروض من Firebase
+  Future<void> _loadOffers() async {
+    try {
+      setState(() {
+        _isLoading = true;
+      });
+
+      final QuerySnapshot querySnapshot = await _offersCollection
+          .orderBy('created_at', descending: true)
+          .get();
+
+      setState(() {
+        _offers = querySnapshot.docs.map((doc) {
+          final data = doc.data() as Map<String, dynamic>;
+          return {
+            'id': doc.id,
+            'title': data['title'] ?? 'لا يوجد عنوان',
+            'description': data['description'] ?? 'لا يوجد وصف',
+            'image_url': data['image_url'] ?? '',
+            'created_at': data['created_at'],
+          };
+        }).toList();
+      });
+
+    } catch (error) {
+      print('Error loading offers: $error');
+      // عرض رسالة خطأ للمستخدم
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('حدث خطأ في تحميل العروض: $error'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+        _isRefreshing = false;
+      });
+    }
+  }
+
+  Future<void> _refreshData() async {
+    setState(() {
+      _isRefreshing = true;
+    });
+    await _loadOffers();
+  }
+
   @override
   void dispose() {
     _fadeController.dispose();
@@ -94,13 +152,24 @@ class _LibraryScreenState extends State<LibraryScreen> with TickerProviderStateM
                 position: _slideAnimation,
                 child: ScaleTransition(
                   scale: _scaleAnimation,
-                  child: SingleChildScrollView(
-                    physics: const BouncingScrollPhysics(),
-                    child: Column(
-                      children: [
-                        _buildMainBanner(),
-                        _buildTabSection(),
-                        _selectedTab == 'library' ? _buildLibraryContent() : _buildOffersContent(),
+                  child: RefreshIndicator(
+                    onRefresh: _refreshData,
+                    color: primaryColor,
+                    backgroundColor: cardColor,
+                    child: CustomScrollView(
+                      physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+                      slivers: [
+                        SliverToBoxAdapter(
+                          child: Column(
+                            children: [
+                              _buildMainBanner(),
+                              _buildTabSection(),
+                            ],
+                          ),
+                        ),
+                        _selectedTab == 'library'
+                            ? _buildLibraryContent()
+                            : _buildOffersContent(),
                       ],
                     ),
                   ),
@@ -179,7 +248,7 @@ class _LibraryScreenState extends State<LibraryScreen> with TickerProviderStateM
                         Text(
                           _selectedTab == 'library'
                               ? 'موارد تعليمية متنوعة لتعزيز مهاراتك'
-                              : 'عروض حصرية ومميزات خاصة',
+                              : '${_offers.length} عرض متاح حالياً',
                           style: TextStyle(
                             fontSize: 14.sp,
                             color: Colors.white.withOpacity(0.9),
@@ -302,50 +371,67 @@ class _LibraryScreenState extends State<LibraryScreen> with TickerProviderStateM
   }
 
   Widget _buildLibraryContent() {
-    return SlideTransition(
-      position: Tween<Offset>(
-        begin: const Offset(0, 0.3),
-        end: Offset.zero,
-      ).animate(
-        CurvedAnimation(
-          parent: _slideController,
-          curve: const Interval(0.3, 1.0, curve: Curves.easeOut),
+    return SliverToBoxAdapter(
+      child: SlideTransition(
+        position: Tween<Offset>(
+          begin: const Offset(0, 0.3),
+          end: Offset.zero,
+        ).animate(
+          CurvedAnimation(
+            parent: _slideController,
+            curve: const Interval(0.3, 1.0, curve: Curves.easeOut),
+          ),
         ),
-      ),
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 16.w),
-        child: Column(
-          children: [
-            _buildEmptyState(
-              icon: Icons.library_books,
-              title: 'المكتبة فارغة حالياً',
-              description: 'سيتم إضافة المواد التعليمية قريباً',
-              buttonText: 'تصفح المواد المتاحة',
-              onTap: () {
-                // تصفح المواد المتاحة
-              },
-            ),
-            SizedBox(height: 20.h),
-            _buildComingSoonSection(),
-          ],
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16.w),
+          child: Column(
+            children: [
+              _buildEmptyState(
+                icon: Icons.library_books,
+                title: 'المكتبة فارغة حالياً',
+                description: 'سيتم إضافة المواد التعليمية قريباً',
+                buttonText: 'تصفح المواد المتاحة',
+                onTap: () {
+                  // تصفح المواد المتاحة
+                },
+              ),
+              SizedBox(height: 20.h),
+              _buildComingSoonSection(),
+            ],
+          ),
         ),
       ),
     );
   }
 
   Widget _buildOffersContent() {
-    return SlideTransition(
-      position: Tween<Offset>(
-        begin: const Offset(0, 0.3),
-        end: Offset.zero,
-      ).animate(
-        CurvedAnimation(
-          parent: _slideController,
-          curve: const Interval(0.3, 1.0, curve: Curves.easeOut),
+    if (_isLoading) {
+      return SliverFillRemaining(
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(
+                color: primaryColor,
+                strokeWidth: 3.w,
+              ),
+              SizedBox(height: 16.h),
+              Text(
+                'جاري تحميل العروض...',
+                style: TextStyle(
+                  fontSize: 16.sp,
+                  color: textSecondary,
+                  fontFamily: 'Tajawal',
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 16.w),
+      );
+    }
+
+    if (_offers.isEmpty) {
+      return SliverToBoxAdapter(
         child: _buildEmptyState(
           icon: Icons.local_offer,
           title: 'لا توجد عروض حالية',
@@ -355,7 +441,260 @@ class _LibraryScreenState extends State<LibraryScreen> with TickerProviderStateM
             // تفعيل الإشعارات
           },
         ),
+      );
+    }
+
+    return SliverPadding(
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+      sliver: SliverList(
+        delegate: SliverChildBuilderDelegate(
+              (context, index) {
+            final offer = _offers[index];
+            return _buildOfferCard(offer, index);
+          },
+          childCount: _offers.length,
+        ),
       ),
+    );
+  }
+
+  Widget _buildOfferCard(Map<String, dynamic> offer, int index) {
+    return SlideTransition(
+      position: Tween<Offset>(
+        begin: Offset(0, 0.5 + (index * 0.1)),
+        end: Offset.zero,
+      ).animate(
+        CurvedAnimation(
+          parent: _slideController,
+          curve: Interval(0.3 + (index * 0.1), 1.0, curve: Curves.easeOut),
+        ),
+      ),
+      child: Container(
+        margin: EdgeInsets.only(bottom: 16.h),
+        decoration: BoxDecoration(
+          color: cardColor,
+          borderRadius: BorderRadius.circular(20.r),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black12,
+              blurRadius: 15.r,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // صورة العرض
+            Container(
+              height: 200.h,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.only(
+                  topRight: Radius.circular(20.r),
+                  topLeft: Radius.circular(20.r),
+                ),
+                color: primaryColor.withOpacity(0.1),
+                image: offer['image_url'] != null && offer['image_url'].isNotEmpty
+                    ? DecorationImage(
+                  image: NetworkImage(offer['image_url']),
+                  fit: BoxFit.cover,
+                )
+                    : null,
+              ),
+              child: offer['image_url'] == null || offer['image_url'].isEmpty
+                  ? Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.photo_library,
+                      size: 50.w,
+                      color: primaryColor.withOpacity(0.3),
+                    ),
+                    SizedBox(height: 8.h),
+                    Text(
+                      'لا توجد صورة',
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        color: textSecondary,
+                        fontFamily: 'Tajawal',
+                      ),
+                    ),
+                  ],
+                ),
+              )
+                  : null,
+            ),
+
+            // محتوى الكارت
+            Padding(
+              padding: EdgeInsets.all(20.w),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // عنوان العرض
+                  Text(
+                    offer['title'] ?? 'لا يوجد عنوان',
+                    style: TextStyle(
+                      fontSize: 18.sp,
+                      fontWeight: FontWeight.bold,
+                      color: textPrimary,
+                      fontFamily: 'Tajawal',
+                      height: 1.4,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+
+                  SizedBox(height: 12.h),
+
+                  // وصف العرض
+                  Text(
+                    offer['description'] ?? 'لا يوجد وصف',
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      color: textSecondary,
+                      fontFamily: 'Tajawal',
+                      height: 1.5,
+                    ),
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+
+                  SizedBox(height: 16.h),
+
+                  // زر التفاصيل
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: InkWell(
+                      onTap: () {
+                        _showOfferDetails(offer);
+                      },
+                      child: Container(
+                        padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h),
+                        decoration: BoxDecoration(
+                          color: primaryColor,
+                          borderRadius: BorderRadius.circular(10.r),
+                          boxShadow: [
+                            BoxShadow(
+                              color: primaryColor.withOpacity(0.3),
+                              blurRadius: 8.r,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'عرض التفاصيل',
+                              style: TextStyle(
+                                fontSize: 14.sp,
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: 'Tajawal',
+                              ),
+                            ),
+                            SizedBox(width: 8.w),
+                            Icon(
+                              Icons.arrow_back_ios_new,
+                              color: Colors.white,
+                              size: 16.sp,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showOfferDetails(Map<String, dynamic> offer) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return Container(
+          height: MediaQuery.of(context).size.height * 0.8,
+          decoration: BoxDecoration(
+            color: cardColor,
+            borderRadius: BorderRadius.only(
+              topRight: Radius.circular(25.r),
+              topLeft: Radius.circular(25.r),
+            ),
+          ),
+          child: Column(
+            children: [
+              // صورة العرض في البوتوم شيت
+              Container(
+                height: 200.h,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.only(
+                    topRight: Radius.circular(25.r),
+                    topLeft: Radius.circular(25.r),
+                  ),
+                  color: primaryColor.withOpacity(0.1),
+                  image: offer['image_url'] != null && offer['image_url'].isNotEmpty
+                      ? DecorationImage(
+                    image: NetworkImage(offer['image_url']),
+                    fit: BoxFit.cover,
+                  )
+                      : null,
+                ),
+                child: offer['image_url'] == null || offer['image_url'].isEmpty
+                    ? Center(
+                  child: Icon(
+                    Icons.photo_library,
+                    size: 60.w,
+                    color: primaryColor.withOpacity(0.3),
+                  ),
+                )
+                    : null,
+              ),
+
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.all(20.w),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          offer['title'] ?? 'لا يوجد عنوان',
+                          style: TextStyle(
+                            fontSize: 22.sp,
+                            fontWeight: FontWeight.bold,
+                            color: textPrimary,
+                            fontFamily: 'Tajawal',
+                          ),
+                        ),
+                        SizedBox(height: 16.h),
+                        Text(
+                          offer['description'] ?? 'لا يوجد وصف',
+                          style: TextStyle(
+                            fontSize: 16.sp,
+                            color: textSecondary,
+                            fontFamily: 'Tajawal',
+                            height: 1.6,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
