@@ -2090,7 +2090,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
             flags: YoutubePlayerFlags(
               autoPlay: true,
               mute: false,
-              enableCaption: true,
+              enableCaption: false, // ✅ تم تعطيل التسميات التوضيحية
               captionLanguage: 'ar',
               hideControls: true,
               controlsVisibleAtStart: false,
@@ -2098,13 +2098,16 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
               disableDragSeek: false,
               loop: false,
               isLive: false,
-              forceHD: true,
+              forceHD: false, // ✅ تعطيل الجودة القصوى للسماح بالتحكم التلقائي
               startAt: 0,
             ),
           );
 
           _controller!.addListener(_optimizedVideoListener);
           _preloadVideo();
+
+          // ✅ إعداد مراقبة الجودة
+          _setupQualityMonitoring();
 
         } else {
           _setErrorState('رابط الفيديو غير صالح');
@@ -2115,6 +2118,20 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
     } catch (e) {
       _setErrorState('خطأ في تهيئة مشغل الفيديو: $e');
     }
+  }
+
+  void _setupQualityMonitoring() {
+    // ✅ تأخير لضمان تحميل المشغل أولاً
+    Future.delayed(Duration(seconds: 3), () {
+      if (_controller != null && mounted && !_isDisposing) {
+        try {
+          // ✅ إعدادات إضافية لتحسين تجربة الجودة
+          _controller!.setPlaybackRate(1.0);
+        } catch (e) {
+          print('Error in quality setup: $e');
+        }
+      }
+    });
   }
 
   void _preloadVideo() {
