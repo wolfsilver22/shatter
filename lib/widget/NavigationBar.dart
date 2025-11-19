@@ -397,7 +397,7 @@ class _MainNavigationState extends State<MainNavigation> {
           case 0:
             return HomeScreen(navigateToLessons: navigateToLessons);
           case 1:
-            return ExercisesScreen();
+            return HomeworkSolverScreen();
           case 2:
             return LibraryScreen();
           case 3:
