@@ -1097,30 +1097,109 @@ class _VideoControlsOverlay extends StatelessWidget {
                             ],
                           ),
                         ),
-
-                        // أزرار التقديم السريع
-                        IconButton(
-                          onPressed: isVideoEnded ? null : () => onSeekBackward(10),
-                          icon: Icon(
-                            Icons.replay_10,
-                            color: isVideoEnded ? Colors.grey : Colors.white,
-                            size: 24.sp,
-                          ),
-                        ),
-                        SizedBox(width: 8.w),
-
-                        IconButton(
-                          onPressed: isVideoEnded ? null : () => onSeekForward(10),
-                          icon: Icon(
-                            Icons.forward_10,
-                            color: isVideoEnded ? Colors.grey : Colors.white,
-                            size: 24.sp,
-                          ),
-                        ),
                       ],
                     ),
                   ),
                 ),
+              ),
+            ),
+
+            // ✅ جديد: أزرار التقديم والتأخير في منتصف الشاشة
+            if (shouldShowControls && !isVideoEnded)
+              Positioned.fill(
+                child: Align(
+                  alignment: Alignment.center,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // ✅ زر الرجوع 10 ثواني على اليسار قليلاً من المنتصف
+                      Padding(
+                        padding: EdgeInsets.only(left: 40.w),
+                        child: _buildSeekButton(
+                          icon: Icons.replay_10,
+                          seconds: -10,
+                          onTap: () => onSeekBackward(10),
+                        ),
+                      ),
+
+                      // ✅ زر التقديم 10 ثواني على اليمين قليلاً من المنتصف
+                      Padding(
+                        padding: EdgeInsets.only(right: 40.w),
+                        child: _buildSeekButton(
+                          icon: Icons.forward_10,
+                          seconds: 10,
+                          onTap: () => onSeekForward(10),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+            // ✅ زر التشغيل/الإيقاف في المنتصف
+            if (shouldShowControls && !isVideoEnded)
+              Positioned.fill(
+                child: Align(
+                  alignment: Alignment.center,
+                  child: _buildPlayPauseButton(),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ✅ زر التشغيل/الإيقاف الكبير في المنتصف
+  Widget _buildPlayPauseButton() {
+    return GestureDetector(
+      onTap: onTogglePlayPause,
+      child: Container(
+        width: 80.w,
+        height: 80.w,
+        decoration: BoxDecoration(
+          color: Colors.black.withOpacity(0.6),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(
+          isPlaying ? Icons.pause : Icons.play_arrow,
+          color: Colors.white,
+          size: 40.w,
+        ),
+      ),
+    );
+  }
+
+  // ✅ زر التقديم/التأخير
+  Widget _buildSeekButton({
+    required IconData icon,
+    required int seconds,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 60.w,
+        height: 60.w,
+        decoration: BoxDecoration(
+          color: Colors.black.withOpacity(0.6),
+          shape: BoxShape.circle,
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              color: Colors.white,
+              size: 30.w,
+            ),
+            SizedBox(height: 2.h),
+            Text(
+              '${seconds.abs()}',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 12.sp,
+                fontFamily: 'Tajawal',
               ),
             ),
           ],
