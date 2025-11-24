@@ -28,7 +28,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
   String _errorMessage = '';
   bool _isMuted = false;
   bool _isPlaying = false;
-  double _playbackRate = 0.5;
+  double _playbackRate = 1.0;
   bool _isDisposing = false;
   bool _showControls = true;
   Timer? _controlsTimer;
@@ -38,17 +38,8 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
   bool _previousControlsState = true;
   bool _isFirstPlay = true;
   bool _showInitialLoader = true;
-
-  // ✅ متغيرات معدلة لمنع الحلقة اللانهائية
-  bool _isFirstPlayCompleted = false;
-  bool _isSecondPlayCompleted = false;
-  bool _isManualRestart = false;
-
-  // ✅ متغيرات جديدة للدايلوج والعد التنازلي
-  bool _showRestartDialog = false;
-  bool _showCompletionDialog = false;
-  int _countdown = 5;
-  Timer? _countdownTimer;
+  bool _showEndDialog = false; // ✅ جديد: للتحكم في عرض الدايلوج
+  bool _isVideoEnded = false; // ✅ جديد: لتتبع حالة انتهاء الفيديو
 
   @override
   void initState() {
@@ -123,7 +114,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
     Future.delayed(Duration(seconds: 3), () {
       if (_controller != null && mounted && !_isDisposing) {
         try {
-          _controller!.setPlaybackRate(_playbackRate);
+          _controller!.setPlaybackRate(1.0);
         } catch (e) {
           print('Error in quality setup: $e');
         }
@@ -170,109 +161,82 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
         }
       });
     }
-  }
 
-  // ✅ معدل: دالة التعامل مع انتهاء الفيديو
-  void _handleVideoEnd() {
-    if (mounted && !_isDisposing) {
-      if (!_isFirstPlayCompleted) {
-        // ✅ التشغيل الأول انتهى - عرض دايلوج العد التنازلي
-        _isFirstPlayCompleted = true;
-        _showRestartCountdownDialog();
-      } else if (!_isSecondPlayCompleted && !_isManualRestart) {
-        // ✅ التشغيل الثاني انتهى - عرض دايلوج التهنئة
-        _isSecondPlayCompleted = true;
-        _showCompletionDialog = true;
-      }
+    // ✅ جديد: اكتشاف انتهاء الفيديو بشكل أفضل
+    if (_controller!.value.position.inSeconds >= _controller!.value.metaData.duration.inSeconds - 1 && 
+        !_isVideoEnded && 
+        _controller!.value.metaData.duration.inSeconds > 0) {
+      _handleVideoEnd();
     }
   }
 
-  void _showRestartCountdownDialog() {
-    if (mounted && !_isDisposing) {
+  // ✅ محسّن: دالة التعامل مع انتهاء الفيديو
+  void _handleVideoEnd() {
+    if (mounted && !_isDisposing && !_showEndDialog && !_isVideoEnded) {
       setState(() {
-        _showRestartDialog = true;
-        _countdown = 5;
+        _isVideoEnded = true;
+        _showControls = true; // ✅ إظهار التحكمات أولاً
       });
 
-      _startCountdownTimer();
+      // ✅ تأخير ظهور الدايلوج لإعطاء المستخدم فرصة رؤية التحكمات
+      Future.delayed(Duration(milliseconds: 1500), () {
+        if (mounted && !_isDisposing && _isVideoEnded) {
+          setState(() {
+            _showEndDialog = true;
+          });
+          _showEndOfVideoDialog();
+        }
+      });
     }
   }
 
-  void _startCountdownTimer() {
-    _countdownTimer?.cancel();
-    _countdownTimer = Timer.periodic(Duration(seconds: 1), (timer) {
+  // ✅ محسّن: دالة عرض الدايلوج عند انتهاء الفيديو
+  void _showEndOfVideoDialog() {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black.withOpacity(0.85),
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return _EndOfVideoDialog(
+          lessonTitle: widget.lesson['title'] ?? 'الدرس',
+          onReplay: _replayVideo,
+          onExit: _exitToLessons,
+        );
+      },
+    ).then((value) {
       if (mounted && !_isDisposing) {
         setState(() {
-          _countdown--;
+          _showEndDialog = false;
+          _isVideoEnded = false;
         });
-
-        if (_countdown <= 0) {
-          timer.cancel();
-          _restartVideoWithNormalSpeed();
-        }
       }
     });
   }
 
-  void _restartVideoWithNormalSpeed() {
+  // ✅ محسّن: دالة إعادة تشغيل الفيديو
+  void _replayVideo() {
     if (_controller != null && !_isDisposing) {
-      setState(() {
-        _showRestartDialog = false;
-        _showInitialLoader = true;
-        _playbackRate = 1.0;
-      });
-
-      _countdownTimer?.cancel();
-
       _controller!.seekTo(Duration.zero);
-      _controller!.setPlaybackRate(1.0);
-
-      Future.delayed(Duration(milliseconds: 500), () {
-        if (mounted && !_isDisposing) {
-          _controller!.play();
-          setState(() {
-            _showInitialLoader = false;
-            _showControls = false;
-          });
-          _startControlsTimer();
-        }
+      _controller!.play();
+      setState(() {
+        _showEndDialog = false;
+        _isVideoEnded = false;
+        _isPlaying = true;
+        _showControls = false;
       });
+      _startControlsTimer();
+      
+      // ✅ إغلاق الدايلوج يدوياً
+      Navigator.of(context).pop();
     }
   }
 
-  void _restartFromBeginning() {
-    if (_controller != null && !_isDisposing) {
-      setState(() {
-        _showCompletionDialog = false;
-        _isManualRestart = true;
-        _isFirstPlayCompleted = false;
-        _isSecondPlayCompleted = false;
-        _showInitialLoader = true;
-        _playbackRate = 0.5;
-      });
-
-      _controller!.seekTo(Duration.zero);
-      _controller!.setPlaybackRate(0.5);
-
-      Future.delayed(Duration(milliseconds: 500), () {
-        if (mounted && !_isDisposing) {
-          _controller!.play();
-          setState(() {
-            _showInitialLoader = false;
-            _showControls = false;
-            _isManualRestart = false;
-          });
-          _startControlsTimer();
-        }
-      });
-    }
-  }
-
-  void _exitLesson() {
-    _countdownTimer?.cancel();
+  // ✅ محسّن: دالة الخروج إلى صفحة الدروس
+  void _exitToLessons() {
     _exitFullScreenMode();
     _stopVideoBeforeExit();
-    Navigator.of(context).pop();
+    Navigator.of(context).pop(); // إغلاق الدايلوج
+    Navigator.of(context).pop(); // العودة للشاشة السابقة
   }
 
   void _setErrorState(String message) {
@@ -294,7 +258,6 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
   }
 
   Future<bool> _onWillPop() async {
-    _countdownTimer?.cancel();
     _exitFullScreenMode();
     _stopVideoBeforeExit();
     await Future.delayed(Duration(milliseconds: 100));
@@ -330,6 +293,22 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
     }
   }
 
+  void _seekForward(int seconds) {
+    if (_controller != null && !_isDisposing) {
+      final newPosition = _controller!.value.position + Duration(seconds: seconds);
+      _controller!.seekTo(newPosition);
+      _showControlsTemporarily();
+    }
+  }
+
+  void _seekBackward(int seconds) {
+    if (_controller != null && !_isDisposing) {
+      final newPosition = _controller!.value.position - Duration(seconds: seconds);
+      _controller!.seekTo(newPosition > Duration.zero ? newPosition : Duration.zero);
+      _showControlsTemporarily();
+    }
+  }
+
   void _changePlaybackRate(double rate) {
     if (_controller != null && !_isDisposing) {
       _controller!.setPlaybackRate(rate);
@@ -357,7 +336,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
   void _startControlsTimer() {
     _controlsTimer?.cancel();
     _controlsTimer = Timer(Duration(seconds: 3), () {
-      if (mounted && !_isDisposing && _isPlaying && _showControls) {
+      if (mounted && !_isDisposing && _isPlaying && _showControls && !_isVideoEnded) {
         setState(() {
           _showControls = false;
           _previousControlsState = false;
@@ -371,7 +350,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
       opacity: _showInitialLoader ? 1.0 : 0.0,
       duration: Duration(milliseconds: 300),
       child: Container(
-        color: Colors.black.withOpacity(0.7),
+        color: Colors.transparent,
         child: Center(
           child: Container(
             width: 80.w,
@@ -404,252 +383,6 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
     );
   }
 
-  Widget _buildRestartCountdownDialog() {
-    return Container(
-      color: Colors.black.withOpacity(0.85),
-      child: Center(
-        child: Container(
-          width: 300.w,
-          padding: EdgeInsets.all(24.w),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16.w),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.3),
-                blurRadius: 20.w,
-                offset: Offset(0, 10.h),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.info_outline,
-                color: Color(0xFF1E88E5),
-                size: 50.w,
-              ),
-              SizedBox(height: 16.h),
-              Text(
-                'إعادة التشغيل',
-                style: TextStyle(
-                  fontSize: 20.sp,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                  fontFamily: 'Tajawal',
-                ),
-              ),
-              SizedBox(height: 12.h),
-              Text(
-                'سيتم إعادة تشغيل الفيديو بالسرعة الطبيعية',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  color: Colors.grey[700],
-                  fontFamily: 'Tajawal',
-
-                ),
-              ),
-              SizedBox(height: 20.h),
-              Container(
-                width: 80.w,
-                height: 80.w,
-                decoration: BoxDecoration(
-                  color: Color(0xFF1E88E5),
-                  shape: BoxShape.circle,
-                ),
-                child: Center(
-                  child: Text(
-                    '$_countdown',
-                    style: TextStyle(
-                      fontSize: 28.sp,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ),
-              SizedBox(height: 20.h),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton(
-                  onPressed: _exitLesson,
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.red,
-                    side: BorderSide(color: Colors.red),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12.w),
-                    ),
-                    padding: EdgeInsets.symmetric(vertical: 12.h),
-                  ),
-                  child: Text(
-                    'مقاطعة الدرس والخروج',
-                    style: TextStyle(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w500,
-                      fontFamily: 'Tajawal',
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCompletionDialog() {
-    return Container(
-      color: Colors.black.withOpacity(0.85),
-      child: Center(
-        child: Container(
-          width: 320.w,
-          padding: EdgeInsets.all(24.w),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16.w),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.3),
-                blurRadius: 20.w,
-                offset: Offset(0, 10.h),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 80.w,
-                height: 80.w,
-                decoration: BoxDecoration(
-                  color: Color(0xFF4CAF50).withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.check_circle,
-                  color: Color(0xFF4CAF50),
-                  size: 50.w,
-                ),
-              ),
-              SizedBox(height: 16.h),
-              Text(
-                'أحسنت!',
-                style: TextStyle(
-                  fontSize: 24.sp,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                  fontFamily: 'Tajawal',
-                ),
-              ),
-              SizedBox(height: 8.h),
-              Text(
-                'لقد أنهيت مشاهدة الدرس بنجاح',
-                style: TextStyle(
-                  fontSize: 16.sp,
-                  color: Colors.grey[700],
-                  fontFamily: 'Tajawal',
-                ),
-              ),
-              SizedBox(height: 4.h),
-              Text(
-                widget.lesson['title'] ?? 'الدرس',
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  color: Color(0xFF1E88E5),
-                  fontWeight: FontWeight.w500,
-                  fontFamily: 'Tajawal',
-                ),
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              SizedBox(height: 30.h),
-              Row(
-                children: [
-                  Expanded(
-                    child: Container(
-                      height: 50.h,
-                      child: OutlinedButton(
-                        onPressed: _restartFromBeginning,
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Color(0xFF1E88E5),
-                          side: BorderSide(color: Color(0xFF1E88E5)),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12.w),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.replay, size: 20.w),
-                            SizedBox(width: 8.w),
-                            Text(
-                              'إعادة الدرس',
-                              style: TextStyle(
-                                fontSize: 14.sp,
-                                fontWeight: FontWeight.w500,
-                                fontFamily: 'Tajawal',
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  SizedBox(width: 12.w),
-                  Expanded(
-                    child: Container(
-                      height: 50.h,
-                      child: ElevatedButton(
-                        onPressed: _exitLesson,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Color(0xFF1E88E5),
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12.w),
-                          ),
-                          elevation: 2,
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.exit_to_app, size: 20.w),
-                            SizedBox(width: 8.w),
-                            Text(
-                              'إنهاء الدرس',
-                              style: TextStyle(
-                                fontSize: 14.sp,
-                                fontWeight: FontWeight.w500,
-                                fontFamily: 'Tajawal',
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 10.h),
-              Text(
-                'إعادة التشغيل ستكون بالسرعة البطيئة أولاً (0.5x) ثم الطبيعية',
-                style: TextStyle(
-                  fontSize: 10.sp,
-                  color: Colors.grey[600],
-                  fontFamily: 'Tajawal',
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildYouTubeLikeControls() {
     return _VideoControlsOverlay(
       showControls: _showControls,
@@ -661,8 +394,11 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
       courseTitle: widget.subjectName,
       onTogglePlayPause: _togglePlayPause,
       onToggleMute: _toggleMute,
+      onSeekForward: _seekForward,
+      onSeekBackward: _seekBackward,
       onChangePlaybackRate: _changePlaybackRate,
       onExit: _onWillPop,
+      isVideoEnded: _isVideoEnded, // ✅ جديد: تمرير حالة انتهاء الفيديو
     );
   }
 
@@ -756,19 +492,22 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
         onWillPop: _onWillPop,
         child: GestureDetector(
           onTap: () {
-            if (_showControls != !_showControls) {
-              setState(() {
-                _showControls = !_showControls;
-              });
-            }
-            if (_showControls) {
-              _startControlsTimer();
+            if (!_isVideoEnded) { // ✅ منع إخفاء التحكمات عند انتهاء الفيديو
+              if (_showControls != !_showControls) {
+                setState(() {
+                  _showControls = !_showControls;
+                });
+              }
+              if (_showControls) {
+                _startControlsTimer();
+              }
             }
           },
           child: Scaffold(
             backgroundColor: Colors.black,
             body: Stack(
               children: [
+                // الفيديو الرئيسي
                 if (_isPlayerReady)
                   Positioned.fill(
                     child: YoutubePlayer(
@@ -792,10 +531,12 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                       },
                     ),
                   ),
+
+                // عناصر التحكم
                 if (_isPlayerReady) _buildYouTubeLikeControls(),
+
+                // دائرة التحميل
                 if (_showInitialLoader) _buildInitialLoader(),
-                if (_showRestartDialog) _buildRestartCountdownDialog(),
-                if (_showCompletionDialog) _buildCompletionDialog(),
               ],
             ),
           ),
@@ -808,7 +549,6 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
   void dispose() {
     _isDisposing = true;
     _controlsTimer?.cancel();
-    _countdownTimer?.cancel();
     _stopVideoBeforeExit();
     _exitFullScreenMode();
 
@@ -821,6 +561,204 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
   }
 }
 
+// ✅ محسّن: دايلوج نهاية الفيديو بأبعاد مناسبة
+class _EndOfVideoDialog extends StatelessWidget {
+  final String lessonTitle;
+  final VoidCallback onReplay;
+  final VoidCallback onExit;
+
+  const _EndOfVideoDialog({
+    required this.lessonTitle,
+    required this.onReplay,
+    required this.onExit,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final screenSize = MediaQuery.of(context).size;
+    final isLandscape = screenSize.width > screenSize.height;
+    
+    // ✅ حساب الأبعاد بناءً على اتجاه الشاشة
+    final dialogWidth = isLandscape ? screenSize.width * 0.6 : screenSize.width * 0.85;
+    final dialogHeight = isLandscape ? screenSize.height * 0.7 : screenSize.height * 0.6;
+
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: EdgeInsets.all(20.w),
+      child: Container(
+        width: dialogWidth,
+        height: dialogHeight,
+        padding: EdgeInsets.all(24.w),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16.w),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: 20.w,
+              offset: Offset(0, 10.h),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // أيقونة النجاح
+            Container(
+              width: 80.w,
+              height: 80.w,
+              decoration: BoxDecoration(
+                color: Color(0xFF4CAF50).withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.check_circle,
+                color: Color(0xFF4CAF50),
+                size: 50.w,
+              ),
+            ),
+
+            SizedBox(height: 20.h),
+
+            // عنوان التهنئة
+            Text(
+              'أحسنت!',
+              style: TextStyle(
+                fontSize: 24.sp,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+                fontFamily: 'Tajawal',
+              ),
+            ),
+
+            SizedBox(height: 8.h),
+
+            // نص التهنئة
+            Text(
+              'لقد أنهيت مشاهدة الدرس',
+              style: TextStyle(
+                fontSize: 16.sp,
+                color: Colors.grey[700],
+                fontFamily: 'Tajawal',
+              ),
+            ),
+
+            SizedBox(height: 4.h),
+
+            // اسم الدرس
+            Expanded(
+              child: SingleChildScrollView(
+                child: Text(
+                  lessonTitle,
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    color: Color(0xFF1E88E5),
+                    fontWeight: FontWeight.w500,
+                    fontFamily: 'Tajawal',
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ),
+
+            SizedBox(height: 30.h),
+
+            // أزرار التحكم
+            Row(
+              children: [
+                // زر إعادة التشغيل
+                Expanded(
+                  child: Container(
+                    height: 50.h,
+                    child: OutlinedButton(
+                      onPressed: onReplay,
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Color(0xFF1E88E5),
+                        side: BorderSide(color: Color(0xFF1E88E5)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.w),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.replay, size: 20.w),
+                          SizedBox(width: 8.w),
+                          Text(
+                            'إعادة المشاهدة',
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w500,
+                              fontFamily: 'Tajawal',
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+
+                SizedBox(width: 12.w),
+
+                // زر العودة للدروس
+                Expanded(
+                  child: Container(
+                    height: 50.h,
+                    child: ElevatedButton(
+                      onPressed: onExit,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Color(0xFF1E88E5),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.w),
+                        ),
+                        elevation: 2,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.list_alt, size: 20.w),
+                          SizedBox(width: 8.w),
+                          Text(
+                            'العودة للدروس',
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w500,
+                              fontFamily: 'Tajawal',
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
+            SizedBox(height: 10.h),
+
+            // زر إغلاق بسيط
+            TextButton(
+              onPressed: onExit,
+              child: Text(
+                'إغلاق',
+                style: TextStyle(
+                  fontSize: 12.sp,
+                  color: Colors.grey[600],
+                  fontFamily: 'Tajawal',
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ✅ محسّن: واجهة التحكم مع دعم حالة انتهاء الفيديو
 class _VideoControlsOverlay extends StatelessWidget {
   final bool showControls;
   final bool isPlaying;
@@ -831,8 +769,11 @@ class _VideoControlsOverlay extends StatelessWidget {
   final String courseTitle;
   final VoidCallback onTogglePlayPause;
   final VoidCallback onToggleMute;
+  final Function(int) onSeekForward;
+  final Function(int) onSeekBackward;
   final Function(double) onChangePlaybackRate;
   final Future<bool> Function() onExit;
+  final bool isVideoEnded; // ✅ جديد: حالة انتهاء الفيديو
 
   const _VideoControlsOverlay({
     required this.showControls,
@@ -844,8 +785,11 @@ class _VideoControlsOverlay extends StatelessWidget {
     required this.courseTitle,
     required this.onTogglePlayPause,
     required this.onToggleMute,
+    required this.onSeekForward,
+    required this.onSeekBackward,
     required this.onChangePlaybackRate,
     required this.onExit,
+    required this.isVideoEnded, // ✅ جديد
   });
 
   String _formatDuration(Duration duration) {
@@ -861,13 +805,17 @@ class _VideoControlsOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // ✅ إظهار التحكمات دائماً عند انتهاء الفيديو
+    final shouldShowControls = showControls || isVideoEnded;
+    
     return AnimatedOpacity(
-      opacity: showControls ? 1.0 : 0.0,
+      opacity: shouldShowControls ? 1.0 : 0.0,
       duration: Duration(milliseconds: 300),
       child: Container(
         color: Colors.transparent,
         child: Stack(
           children: [
+            // التحكم السفلي
             Positioned(
               bottom: 0,
               left: 0,
@@ -886,55 +834,67 @@ class _VideoControlsOverlay extends StatelessWidget {
                 ),
                 child: Column(
                   children: [
-                    Container(
-                      height: 3.h,
-                      child: ProgressBar(
-                        isExpanded: true,
-                        controller: controller!,
-                        colors: ProgressBarColors(
-                          playedColor: Colors.red,
-                          handleColor: Colors.red,
-                          backgroundColor: Colors.grey[800]!,
+                    // شريط التقدم
+                    if (!isVideoEnded) // ✅ إخفاء شريط التقدم عند انتهاء الفيديو
+                      Container(
+                        height: 3.h,
+                        child: ProgressBar(
+                          isExpanded: true,
+                          controller: controller!,
+                          colors: ProgressBarColors(
+                            playedColor: Colors.red,
+                            handleColor: Colors.red,
+                            backgroundColor: Colors.grey[800]!,
+                          ),
                         ),
                       ),
-                    ),
                     SizedBox(height: 8.h),
+
+                    // أزرار التحكم
                     Expanded(
                       child: Padding(
                         padding: EdgeInsets.symmetric(horizontal: 16.w),
                         child: Row(
                           children: [
+                            // زر التشغيل/الإيقاف
                             IconButton(
-                              onPressed: onTogglePlayPause,
+                              onPressed: isVideoEnded ? null : onTogglePlayPause, // ✅ تعطيل عند الانتهاء
                               icon: Icon(
                                 isPlaying ? Icons.pause : Icons.play_arrow,
-                                color: Colors.white,
+                                color: isVideoEnded ? Colors.grey : Colors.white,
                                 size: 24.sp,
                               ),
                             ),
                             SizedBox(width: 8.w),
+
+                            // الوقت الحالي
                             Text(
                               _formatDuration(controller?.value.position ?? Duration.zero),
                               style: TextStyle(
-                                color: Colors.white,
+                                color: isVideoEnded ? Colors.grey : Colors.white,
                                 fontSize: 12.sp,
                                 fontFamily: 'Tajawal',
                               ),
                             ),
                             SizedBox(width: 16.w),
+
+                            // زر الكتم
                             IconButton(
-                              onPressed: onToggleMute,
+                              onPressed: isVideoEnded ? null : onToggleMute, // ✅ تعطيل عند الانتهاء
                               icon: Icon(
                                 isMuted ? Icons.volume_off : Icons.volume_up,
-                                color: Colors.white,
+                                color: isVideoEnded ? Colors.grey : Colors.white,
                                 size: 20.sp,
                               ),
                             ),
                             SizedBox(width: 8.w),
+
+                            // سرعة التشغيل
                             PopupMenuButton<double>(
+                              enabled: !isVideoEnded, // ✅ تعطيل عند الانتهاء
                               icon: Icon(
                                 Icons.speed,
-                                color: Colors.white,
+                                color: isVideoEnded ? Colors.grey : Colors.white,
                                 size: 20.sp,
                               ),
                               onSelected: onChangePlaybackRate,
@@ -969,16 +929,24 @@ class _VideoControlsOverlay extends StatelessWidget {
                                 ),
                               ],
                             ),
+
                             Spacer(),
+
+                            // الوقت المتبقي
                             Text(
-                              '-${_formatDuration((controller?.value.metaData.duration ?? Duration.zero) - (controller?.value.position ?? Duration.zero))}',
+                              isVideoEnded 
+                                ? '00:00' 
+                                : '-${_formatDuration((controller?.value.metaData.duration ?? Duration.zero) - (controller?.value.position ?? Duration.zero))}',
                               style: TextStyle(
-                                color: Colors.white,
+                                color: isVideoEnded ? Colors.grey : Colors.white,
                                 fontSize: 12.sp,
                                 fontFamily: 'Tajawal',
                               ),
                             ),
+
                             SizedBox(width: 16.w),
+
+                            // زر الخروج من وضع الملء
                             IconButton(
                               onPressed: () async {
                                 if (await onExit()) {
@@ -999,15 +967,17 @@ class _VideoControlsOverlay extends StatelessWidget {
                 ),
               ),
             ),
+
+            // التحكم العلوي
             Positioned(
               top: 0,
               left: 0,
               right: 0,
               child: AnimatedOpacity(
-                opacity: showControls ? 1.0 : 0.0,
+                opacity: shouldShowControls ? 1.0 : 0.0,
                 duration: Duration(milliseconds: 300),
                 child: Container(
-                  height: 60.h,
+                  height: 80.h,
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
@@ -1022,6 +992,7 @@ class _VideoControlsOverlay extends StatelessWidget {
                     padding: EdgeInsets.symmetric(horizontal: 16.w),
                     child: Row(
                       children: [
+                        // زر العودة
                         IconButton(
                           onPressed: () async {
                             if (await onExit()) {
@@ -1035,6 +1006,8 @@ class _VideoControlsOverlay extends StatelessWidget {
                           ),
                         ),
                         SizedBox(width: 8.w),
+
+                        // معلومات الدرس
                         Expanded(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -1063,6 +1036,26 @@ class _VideoControlsOverlay extends StatelessWidget {
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ],
+                          ),
+                        ),
+
+                        // أزرار التقديم السريع
+                        IconButton(
+                          onPressed: isVideoEnded ? null : () => onSeekBackward(10), // ✅ تعطيل عند الانتهاء
+                          icon: Icon(
+                            Icons.replay_10,
+                            color: isVideoEnded ? Colors.grey : Colors.white,
+                            size: 24.sp,
+                          ),
+                        ),
+                        SizedBox(width: 8.w),
+
+                        IconButton(
+                          onPressed: isVideoEnded ? null : () => onSeekForward(10), // ✅ تعطيل عند الانتهاء
+                          icon: Icon(
+                            Icons.forward_10,
+                            color: isVideoEnded ? Colors.grey : Colors.white,
+                            size: 24.sp,
                           ),
                         ),
                       ],
