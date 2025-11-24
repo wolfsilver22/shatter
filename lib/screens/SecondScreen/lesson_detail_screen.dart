@@ -38,8 +38,8 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
   bool _previousControlsState = true;
   bool _isFirstPlay = true;
   bool _showInitialLoader = true;
-  bool _showEndDialog = false; // ✅ جديد: للتحكم في عرض الدايلوج
-  bool _isVideoEnded = false; // ✅ جديد: لتتبع حالة انتهاء الفيديو
+  bool _showEndDialog = false;
+  bool _isVideoEnded = false;
 
   @override
   void initState() {
@@ -162,7 +162,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
       });
     }
 
-    // ✅ جديد: اكتشاف انتهاء الفيديو بشكل أفضل
+    // ✅ اكتشاف انتهاء الفيديو بشكل أفضل
     if (_controller!.value.position.inSeconds >= _controller!.value.metaData.duration.inSeconds - 1 && 
         !_isVideoEnded && 
         _controller!.value.metaData.duration.inSeconds > 0) {
@@ -175,7 +175,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
     if (mounted && !_isDisposing && !_showEndDialog && !_isVideoEnded) {
       setState(() {
         _isVideoEnded = true;
-        _showControls = true; // ✅ إظهار التحكمات أولاً
+        _showControls = true;
       });
 
       // ✅ تأخير ظهور الدايلوج لإعطاء المستخدم فرصة رؤية التحكمات
@@ -192,22 +192,30 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
 
   // ✅ محسّن: دالة عرض الدايلوج عند انتهاء الفيديو
   void _showEndOfVideoDialog() {
-    showDialog(
-      context: context,
-      barrierColor: Colors.black.withOpacity(0.85),
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return _EndOfVideoDialog(
-          lessonTitle: widget.lesson['title'] ?? 'الدرس',
-          onReplay: _replayVideo,
-          onExit: _exitToLessons,
-        );
-      },
-    ).then((value) {
-      if (mounted && !_isDisposing) {
-        setState(() {
-          _showEndDialog = false;
-          _isVideoEnded = false;
+    // ✅ إضافة تأخير إضافي لضمان استقرار الواجهة
+    Future.delayed(Duration(milliseconds: 500), () {
+      if (mounted && !_isDisposing && _showEndDialog) {
+        showDialog(
+          context: context,
+          barrierColor: Colors.black.withOpacity(0.85),
+          barrierDismissible: false,
+          builder: (BuildContext context) {
+            return WillPopScope(
+              onWillPop: () async => false,
+              child: _EndOfVideoDialog(
+                lessonTitle: widget.lesson['title'] ?? 'الدرس',
+                onReplay: _replayVideo,
+                onExit: _exitToLessons,
+              ),
+            );
+          },
+        ).then((value) {
+          if (mounted && !_isDisposing) {
+            setState(() {
+              _showEndDialog = false;
+              _isVideoEnded = false;
+            });
+          }
         });
       }
     });
@@ -233,10 +241,17 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
 
   // ✅ محسّن: دالة الخروج إلى صفحة الدروس
   void _exitToLessons() {
-    _exitFullScreenMode();
-    _stopVideoBeforeExit();
-    Navigator.of(context).pop(); // إغلاق الدايلوج
-    Navigator.of(context).pop(); // العودة للشاشة السابقة
+    // ✅ إغلاق الدايلوج أولاً
+    Navigator.of(context).pop(); 
+    
+    // ✅ ثم الخروج من الشاشة
+    Future.delayed(Duration(milliseconds: 300), () {
+      if (mounted && !_isDisposing) {
+        _exitFullScreenMode();
+        _stopVideoBeforeExit();
+        Navigator.of(context).pop();
+      }
+    });
   }
 
   void _setErrorState(String message) {
@@ -398,7 +413,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
       onSeekBackward: _seekBackward,
       onChangePlaybackRate: _changePlaybackRate,
       onExit: _onWillPop,
-      isVideoEnded: _isVideoEnded, // ✅ جديد: تمرير حالة انتهاء الفيديو
+      isVideoEnded: _isVideoEnded,
     );
   }
 
@@ -492,7 +507,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
         onWillPop: _onWillPop,
         child: GestureDetector(
           onTap: () {
-            if (!_isVideoEnded) { // ✅ منع إخفاء التحكمات عند انتهاء الفيديو
+            if (!_isVideoEnded) {
               if (_showControls != !_showControls) {
                 setState(() {
                   _showControls = !_showControls;
@@ -561,7 +576,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
   }
 }
 
-// ✅ محسّن: دايلوج نهاية الفيديو بأبعاد مناسبة
+// ✅ محسّن: دايلوج نهاية الفيديو بتصميم احترافي ومناسب
 class _EndOfVideoDialog extends StatelessWidget {
   final String lessonTitle;
   final VoidCallback onReplay;
@@ -579,8 +594,8 @@ class _EndOfVideoDialog extends StatelessWidget {
     final isLandscape = screenSize.width > screenSize.height;
     
     // ✅ حساب الأبعاد بناءً على اتجاه الشاشة
-    final dialogWidth = isLandscape ? screenSize.width * 0.6 : screenSize.width * 0.85;
-    final dialogHeight = isLandscape ? screenSize.height * 0.7 : screenSize.height * 0.6;
+    final dialogWidth = isLandscape ? screenSize.width * 0.5 : screenSize.width * 0.8;
+    final dialogHeight = isLandscape ? screenSize.height * 0.55 : screenSize.height * 0.5;
 
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -588,167 +603,210 @@ class _EndOfVideoDialog extends StatelessWidget {
       child: Container(
         width: dialogWidth,
         height: dialogHeight,
-        padding: EdgeInsets.all(24.w),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(16.w),
+          borderRadius: BorderRadius.circular(20.w),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.3),
-              blurRadius: 20.w,
-              offset: Offset(0, 10.h),
+              blurRadius: 25.w,
+              offset: Offset(0, 15.h),
             ),
           ],
         ),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            // أيقونة النجاح
-            Container(
-              width: 80.w,
-              height: 80.w,
-              decoration: BoxDecoration(
-                color: Color(0xFF4CAF50).withOpacity(0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.check_circle,
-                color: Color(0xFF4CAF50),
-                size: 50.w,
-              ),
-            ),
-
-            SizedBox(height: 20.h),
-
-            // عنوان التهنئة
-            Text(
-              'أحسنت!',
-              style: TextStyle(
-                fontSize: 24.sp,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
-                fontFamily: 'Tajawal',
-              ),
-            ),
-
-            SizedBox(height: 8.h),
-
-            // نص التهنئة
-            Text(
-              'لقد أنهيت مشاهدة الدرس',
-              style: TextStyle(
-                fontSize: 16.sp,
-                color: Colors.grey[700],
-                fontFamily: 'Tajawal',
-              ),
-            ),
-
-            SizedBox(height: 4.h),
-
-            // اسم الدرس
+            // ✅ الجزء العلوي: المحتوى
             Expanded(
-              child: SingleChildScrollView(
-                child: Text(
-                  lessonTitle,
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    color: Color(0xFF1E88E5),
-                    fontWeight: FontWeight.w500,
-                    fontFamily: 'Tajawal',
-                  ),
-                  textAlign: TextAlign.center,
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
+              child: Padding(
+                padding: EdgeInsets.all(24.w),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // ✅ أيقونة النجاح - بحجم مناسب
+                    Container(
+                      width: 70.w,
+                      height: 70.w,
+                      decoration: BoxDecoration(
+                        color: Color(0xFF4CAF50).withOpacity(0.15),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.check_circle_rounded,
+                        color: Color(0xFF4CAF50),
+                        size: 45.w,
+                      ),
+                    ),
+
+                    SizedBox(height: 20.h),
+
+                    // ✅ عنوان التهنئة
+                    Text(
+                      'أحسنت!',
+                      style: TextStyle(
+                        fontSize: 22.sp,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                        fontFamily: 'Tajawal',
+                      ),
+                    ),
+
+                    SizedBox(height: 8.h),
+
+                    // ✅ نص التهنئة الجديد
+                    Text(
+                      'تهانينا، أنهيت الدرس بنجاح',
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        color: Colors.grey[700],
+                        fontFamily: 'Tajawal',
+                      ),
+                    ),
+
+                    SizedBox(height: 12.h),
+
+                    // ✅ اسم الدرس في إطار مميز
+                    Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                      decoration: BoxDecoration(
+                        color: Color(0xFF1E88E5).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12.w),
+                        border: Border.all(
+                          color: Color(0xFF1E88E5).withOpacity(0.3),
+                          width: 1.w,
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          Text(
+                            'اسم الدرس',
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              color: Colors.grey[600],
+                              fontFamily: 'Tajawal',
+                            ),
+                          ),
+                          SizedBox(height: 4.h),
+                          Text(
+                            lessonTitle,
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                              color: Color(0xFF1E88E5),
+                              fontWeight: FontWeight.w600,
+                              fontFamily: 'Tajawal',
+                            ),
+                            textAlign: TextAlign.center,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
 
-            SizedBox(height: 30.h),
-
-            // أزرار التحكم
-            Row(
-              children: [
-                // زر إعادة التشغيل
-                Expanded(
-                  child: Container(
-                    height: 50.h,
-                    child: OutlinedButton(
-                      onPressed: onReplay,
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Color(0xFF1E88E5),
-                        side: BorderSide(color: Color(0xFF1E88E5)),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12.w),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.replay, size: 20.w),
-                          SizedBox(width: 8.w),
-                          Text(
-                            'إعادة المشاهدة',
-                            style: TextStyle(
-                              fontSize: 14.sp,
-                              fontWeight: FontWeight.w500,
-                              fontFamily: 'Tajawal',
-                            ),
+            // ✅ الجزء السفلي: الأزرار
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.all(20.w),
+              decoration: BoxDecoration(
+                color: Colors.grey[50],
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(20.w),
+                  bottomRight: Radius.circular(20.w),
+                ),
+                border: Border(
+                  top: BorderSide(
+                    color: Colors.grey[300]!,
+                    width: 1.w,
+                  ),
+                ),
+              ),
+              child: Row(
+                children: [
+                  // ✅ زر إعادة المشاهدة (على اليمين - للمستخدم)
+                  Expanded(
+                    child: Container(
+                      height: 48.h,
+                      child: OutlinedButton(
+                        onPressed: onReplay,
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Color(0xFF1E88E5),
+                          side: BorderSide(
+                            color: Color(0xFF1E88E5),
+                            width: 1.5.w,
                           ),
-                        ],
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12.w),
+                          ),
+                          backgroundColor: Colors.white,
+                          elevation: 1,
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.replay_rounded,
+                              size: 20.w,
+                            ),
+                            SizedBox(width: 6.w),
+                            Text(
+                              'إعادة المشاهدة',
+                              style: TextStyle(
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.w600,
+                                fontFamily: 'Tajawal',
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
 
-                SizedBox(width: 12.w),
+                  SizedBox(width: 12.w),
 
-                // زر العودة للدروس
-                Expanded(
-                  child: Container(
-                    height: 50.h,
-                    child: ElevatedButton(
-                      onPressed: onExit,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFF1E88E5),
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12.w),
-                        ),
-                        elevation: 2,
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.list_alt, size: 20.w),
-                          SizedBox(width: 8.w),
-                          Text(
-                            'العودة للدروس',
-                            style: TextStyle(
-                              fontSize: 14.sp,
-                              fontWeight: FontWeight.w500,
-                              fontFamily: 'Tajawal',
-                            ),
+                  // ✅ زر العودة للدروس (على اليسار - للمستخدم)
+                  Expanded(
+                    child: Container(
+                      height: 48.h,
+                      child: ElevatedButton(
+                        onPressed: onExit,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Color(0xFF1E88E5),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12.w),
                           ),
-                        ],
+                          elevation: 2,
+                          shadowColor: Color(0xFF1E88E5).withOpacity(0.3),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.check_circle_rounded,
+                              size: 20.w,
+                            ),
+                            SizedBox(width: 6.w),
+                            Text(
+                              'إنهاء الدرس',
+                              style: TextStyle(
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.w600,
+                                fontFamily: 'Tajawal',
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
-            ),
-
-            SizedBox(height: 10.h),
-
-            // زر إغلاق بسيط
-            TextButton(
-              onPressed: onExit,
-              child: Text(
-                'إغلاق',
-                style: TextStyle(
-                  fontSize: 12.sp,
-                  color: Colors.grey[600],
-                  fontFamily: 'Tajawal',
-                ),
+                ],
               ),
             ),
           ],
@@ -773,7 +831,7 @@ class _VideoControlsOverlay extends StatelessWidget {
   final Function(int) onSeekBackward;
   final Function(double) onChangePlaybackRate;
   final Future<bool> Function() onExit;
-  final bool isVideoEnded; // ✅ جديد: حالة انتهاء الفيديو
+  final bool isVideoEnded;
 
   const _VideoControlsOverlay({
     required this.showControls,
@@ -789,7 +847,7 @@ class _VideoControlsOverlay extends StatelessWidget {
     required this.onSeekBackward,
     required this.onChangePlaybackRate,
     required this.onExit,
-    required this.isVideoEnded, // ✅ جديد
+    required this.isVideoEnded,
   });
 
   String _formatDuration(Duration duration) {
@@ -835,7 +893,7 @@ class _VideoControlsOverlay extends StatelessWidget {
                 child: Column(
                   children: [
                     // شريط التقدم
-                    if (!isVideoEnded) // ✅ إخفاء شريط التقدم عند انتهاء الفيديو
+                    if (!isVideoEnded)
                       Container(
                         height: 3.h,
                         child: ProgressBar(
@@ -858,7 +916,7 @@ class _VideoControlsOverlay extends StatelessWidget {
                           children: [
                             // زر التشغيل/الإيقاف
                             IconButton(
-                              onPressed: isVideoEnded ? null : onTogglePlayPause, // ✅ تعطيل عند الانتهاء
+                              onPressed: isVideoEnded ? null : onTogglePlayPause,
                               icon: Icon(
                                 isPlaying ? Icons.pause : Icons.play_arrow,
                                 color: isVideoEnded ? Colors.grey : Colors.white,
@@ -880,7 +938,7 @@ class _VideoControlsOverlay extends StatelessWidget {
 
                             // زر الكتم
                             IconButton(
-                              onPressed: isVideoEnded ? null : onToggleMute, // ✅ تعطيل عند الانتهاء
+                              onPressed: isVideoEnded ? null : onToggleMute,
                               icon: Icon(
                                 isMuted ? Icons.volume_off : Icons.volume_up,
                                 color: isVideoEnded ? Colors.grey : Colors.white,
@@ -891,7 +949,7 @@ class _VideoControlsOverlay extends StatelessWidget {
 
                             // سرعة التشغيل
                             PopupMenuButton<double>(
-                              enabled: !isVideoEnded, // ✅ تعطيل عند الانتهاء
+                              enabled: !isVideoEnded,
                               icon: Icon(
                                 Icons.speed,
                                 color: isVideoEnded ? Colors.grey : Colors.white,
@@ -1041,7 +1099,7 @@ class _VideoControlsOverlay extends StatelessWidget {
 
                         // أزرار التقديم السريع
                         IconButton(
-                          onPressed: isVideoEnded ? null : () => onSeekBackward(10), // ✅ تعطيل عند الانتهاء
+                          onPressed: isVideoEnded ? null : () => onSeekBackward(10),
                           icon: Icon(
                             Icons.replay_10,
                             color: isVideoEnded ? Colors.grey : Colors.white,
@@ -1051,7 +1109,7 @@ class _VideoControlsOverlay extends StatelessWidget {
                         SizedBox(width: 8.w),
 
                         IconButton(
-                          onPressed: isVideoEnded ? null : () => onSeekForward(10), // ✅ تعطيل عند الانتهاء
+                          onPressed: isVideoEnded ? null : () => onSeekForward(10),
                           icon: Icon(
                             Icons.forward_10,
                             color: isVideoEnded ? Colors.grey : Colors.white,
