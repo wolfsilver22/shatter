@@ -594,15 +594,18 @@ class _EndOfVideoDialog extends StatelessWidget {
     final isLandscape = screenSize.width > screenSize.height;
     
     // ✅ حساب الأبعاد بناءً على اتجاه الشاشة
-    final dialogWidth = isLandscape ? screenSize.width * 0.5 : screenSize.width * 0.8;
-    final dialogHeight = isLandscape ? screenSize.height * 0.55 : screenSize.height * 0.5;
+    final dialogWidth = isLandscape ? screenSize.width * 0.5 : screenSize.width * 0.85;
+    final dialogHeight = isLandscape ? screenSize.height * 0.45 : screenSize.height * 0.4;
 
     return Dialog(
       backgroundColor: Colors.transparent,
       insetPadding: EdgeInsets.all(20.w),
       child: Container(
         width: dialogWidth,
-        height: dialogHeight,
+        // ✅ إزالة الارتفاع الثابت والسماح للمحتوى بتحديد الارتفاع
+        constraints: BoxConstraints(
+          maxHeight: dialogHeight,
+        ),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20.w),
@@ -615,97 +618,95 @@ class _EndOfVideoDialog extends StatelessWidget {
           ],
         ),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          mainAxisSize: MainAxisSize.min, // ✅ مهم: يجعل العمود يأخذ أقل مساحة ممكنة
           children: [
             // ✅ الجزء العلوي: المحتوى
-            Expanded(
-              child: Padding(
-                padding: EdgeInsets.all(24.w),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // ✅ أيقونة النجاح - بحجم مناسب
-                    Container(
-                      width: 70.w,
-                      height: 70.w,
-                      decoration: BoxDecoration(
-                        color: Color(0xFF4CAF50).withOpacity(0.15),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.check_circle_rounded,
-                        color: Color(0xFF4CAF50),
-                        size: 45.w,
+            Padding(
+              padding: EdgeInsets.all(24.w),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // ✅ أيقونة النجاح - بحجم مناسب
+                  Container(
+                    width: 70.w,
+                    height: 70.w,
+                    decoration: BoxDecoration(
+                      color: Color(0xFF4CAF50).withOpacity(0.15),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.check_circle_rounded,
+                      color: Color(0xFF4CAF50),
+                      size: 45.w,
+                    ),
+                  ),
+
+                  SizedBox(height: 16.h), // ✅ تقليل المسافة
+
+                  // ✅ عنوان التهنئة
+                  Text(
+                    'أحسنت!',
+                    style: TextStyle(
+                      fontSize: 22.sp,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                      fontFamily: 'Tajawal',
+                    ),
+                  ),
+
+                  SizedBox(height: 6.h), // ✅ تقليل المسافة
+
+                  // ✅ نص التهنئة الجديد
+                  Text(
+                    'تهانينا، أنهيت الدرس بنجاح',
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      color: Colors.grey[700],
+                      fontFamily: 'Tajawal',
+                    ),
+                  ),
+
+                  SizedBox(height: 12.h),
+
+                  // ✅ اسم الدرس في إطار مميز
+                  Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
+                    decoration: BoxDecoration(
+                      color: Color(0xFF1E88E5).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12.w),
+                      border: Border.all(
+                        color: Color(0xFF1E88E5).withOpacity(0.3),
+                        width: 1.w,
                       ),
                     ),
-
-                    SizedBox(height: 20.h),
-
-                    // ✅ عنوان التهنئة
-                    Text(
-                      'أحسنت!',
-                      style: TextStyle(
-                        fontSize: 22.sp,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
-                        fontFamily: 'Tajawal',
-                      ),
-                    ),
-
-                    SizedBox(height: 8.h),
-
-                    // ✅ نص التهنئة الجديد
-                    Text(
-                      'تهانينا، أنهيت الدرس بنجاح',
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        color: Colors.grey[700],
-                        fontFamily: 'Tajawal',
-                      ),
-                    ),
-
-                    SizedBox(height: 12.h),
-
-                    // ✅ اسم الدرس في إطار مميز
-                    Container(
-                      width: double.infinity,
-                      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-                      decoration: BoxDecoration(
-                        color: Color(0xFF1E88E5).withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12.w),
-                        border: Border.all(
-                          color: Color(0xFF1E88E5).withOpacity(0.3),
-                          width: 1.w,
+                    child: Column(
+                      children: [
+                        Text(
+                          'اسم الدرس',
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            color: Colors.grey[600],
+                            fontFamily: 'Tajawal',
+                          ),
                         ),
-                      ),
-                      child: Column(
-                        children: [
-                          Text(
-                            'اسم الدرس',
-                            style: TextStyle(
-                              fontSize: 12.sp,
-                              color: Colors.grey[600],
-                              fontFamily: 'Tajawal',
-                            ),
+                        SizedBox(height: 4.h),
+                        Text(
+                          lessonTitle,
+                          style: TextStyle(
+                            fontSize: 14.sp,
+                            color: Color(0xFF1E88E5),
+                            fontWeight: FontWeight.w600,
+                            fontFamily: 'Tajawal',
                           ),
-                          SizedBox(height: 4.h),
-                          Text(
-                            lessonTitle,
-                            style: TextStyle(
-                              fontSize: 14.sp,
-                              color: Color(0xFF1E88E5),
-                              fontWeight: FontWeight.w600,
-                              fontFamily: 'Tajawal',
-                            ),
-                            textAlign: TextAlign.center,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ),
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
 
@@ -770,7 +771,7 @@ class _EndOfVideoDialog extends StatelessWidget {
 
                   SizedBox(width: 12.w),
 
-                  // ✅ زر العودة للدروس (على اليسار - للمستخدم)
+                  // ✅ زر إنهاء الدرس (على اليسار - للمستخدم)
                   Expanded(
                     child: Container(
                       height: 48.h,
