@@ -86,7 +86,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
               controlsVisibleAtStart: false,
               useHybridComposition: true,
               disableDragSeek: false,
-              loop: false, // ✅ التأكد من أن loop معطلة
+              loop: false,
               isLive: false,
               forceHD: false,
               startAt: 0,
@@ -175,7 +175,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
       setState(() {
         _isVideoEnded = true;
         _isPlaying = false;
-        _showControls = true; // ✅ إظهار التحكمات عند الانتهاء
+        _showControls = true;
       });
 
       // ✅ إيقاف الفيديو عند الانتهاء (بدون إعادة تشغيل)
@@ -251,22 +251,6 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
           });
         }
       });
-      _showControlsTemporarily();
-    }
-  }
-
-  void _seekForward(int seconds) {
-    if (_controller != null && !_isDisposing && !_isVideoEnded) {
-      final newPosition = _controller!.value.position + Duration(seconds: seconds);
-      _controller!.seekTo(newPosition);
-      _showControlsTemporarily();
-    }
-  }
-
-  void _seekBackward(int seconds) {
-    if (_controller != null && !_isDisposing && !_isVideoEnded) {
-      final newPosition = _controller!.value.position - Duration(seconds: seconds);
-      _controller!.seekTo(newPosition > Duration.zero ? newPosition : Duration.zero);
       _showControlsTemporarily();
     }
   }
@@ -356,8 +340,6 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
       courseTitle: widget.subjectName,
       onTogglePlayPause: _togglePlayPause,
       onToggleMute: _toggleMute,
-      onSeekForward: _seekForward,
-      onSeekBackward: _seekBackward,
       onChangePlaybackRate: _changePlaybackRate,
       onExit: _onWillPop,
       isVideoEnded: _isVideoEnded,
@@ -534,8 +516,6 @@ class _VideoControlsOverlay extends StatelessWidget {
   final String courseTitle;
   final VoidCallback onTogglePlayPause;
   final VoidCallback onToggleMute;
-  final Function(int) onSeekForward;
-  final Function(int) onSeekBackward;
   final Function(double) onChangePlaybackRate;
   final Future<bool> Function() onExit;
   final bool isVideoEnded;
@@ -550,8 +530,6 @@ class _VideoControlsOverlay extends StatelessWidget {
     required this.courseTitle,
     required this.onTogglePlayPause,
     required this.onToggleMute,
-    required this.onSeekForward,
-    required this.onSeekBackward,
     required this.onChangePlaybackRate,
     required this.onExit,
     required this.isVideoEnded,
@@ -810,38 +788,6 @@ class _VideoControlsOverlay extends StatelessWidget {
               ),
             ),
 
-            // ✅ جديد: أزرار التقديم والتأخير في منتصف الشاشة
-            if (shouldShowControls && !isVideoEnded)
-              Positioned.fill(
-                child: Align(
-                  alignment: Alignment.center,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      // ✅ زر الرجوع 10 ثواني على اليسار قليلاً من المنتصف
-                      Padding(
-                        padding: EdgeInsets.only(left: 40.w),
-                        child: _buildSeekButton(
-                          icon: Icons.replay_10,
-                          seconds: -10,
-                          onTap: () => onSeekBackward(10),
-                        ),
-                      ),
-
-                      // ✅ زر التقديم 10 ثواني على اليمين قليلاً من المنتصف
-                      Padding(
-                        padding: EdgeInsets.only(right: 40.w),
-                        child: _buildSeekButton(
-                          icon: Icons.forward_10,
-                          seconds: 10,
-                          onTap: () => onSeekForward(10),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
             // ✅ زر التشغيل/الإيقاف في المنتصف
             if (shouldShowControls)
               Positioned.fill(
@@ -871,44 +817,6 @@ class _VideoControlsOverlay extends StatelessWidget {
           isVideoEnded ? Icons.replay : (isPlaying ? Icons.pause : Icons.play_arrow),
           color: Colors.white,
           size: 40.w,
-        ),
-      ),
-    );
-  }
-
-  // ✅ زر التقديم/التأخير
-  Widget _buildSeekButton({
-    required IconData icon,
-    required int seconds,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 60.w,
-        height: 60.w,
-        decoration: BoxDecoration(
-          color: Colors.black.withOpacity(0.6),
-          shape: BoxShape.circle,
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              color: Colors.white,
-              size: 30.w,
-            ),
-            SizedBox(height: 2.h),
-            Text(
-              '${seconds.abs()}',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 12.sp,
-                fontFamily: 'Tajawal',
-              ),
-            ),
-          ],
         ),
       ),
     );
