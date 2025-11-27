@@ -4,6 +4,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'dart:io';
 
+import '../secrets.dart';
+
 class HomeworkSolverScreen extends StatefulWidget {
   const HomeworkSolverScreen({Key? key}) : super(key: key);
 
@@ -1216,13 +1218,13 @@ class QuestionSolution {
 }
 
 class GeminiService {
-  static const apiKey = process.env.GOOGLE_API_KEY;;
+  static const apiKey = Secrets.googleApiKey;
 
   static Future<String> solveHomework(File image) async {
     try {
       final model = GenerativeModel(
         model: 'gemini-2.0-flash',
-        apiKey: _apiKey,
+        apiKey: apiKey,
       );
 
       final bytes = await image.readAsBytes();
@@ -1278,3 +1280,4 @@ class GeminiService {
     }
   }
 }
+
