@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
@@ -154,67 +155,36 @@ class _HomeworkSolverScreenState extends State<HomeworkSolverScreen>
 
   void _parseSolutions(String responseText) {
     final List<QuestionSolution> solutions = [];
-    final lines = responseText.split('\n');
-    String currentQuestion = '';
-    String currentSolution = '';
-    String currentExplanation = '';
 
-    for (final line in lines) {
-      final trimmedLine = line.trim();
-      if (trimmedLine.isEmpty) continue;
+    try {
+      // طريقة أكثر قوة لتحليل الرد
+      final blocks = responseText.split(RegExp(r'(?=سؤال|Question|Problem)', caseSensitive: false));
 
-      // اكتشاف سؤال جديد
-      if (trimmedLine.contains(RegExp(r'^(سؤال|السؤال|السؤال\s*\d+|Question|Q\d+|Problem|المسألة)'))) {
-        if (currentQuestion.isNotEmpty) {
+      for (final block in blocks) {
+        if (block.trim().isEmpty) continue;
+
+        final questionMatch = RegExp(r'^(سؤال|Question|Problem)[:\s]*(.*?)(?=(الحل|Solution|$))', dotAll: true).firstMatch(block);
+        final solutionMatch = RegExp(r'(الحل|Solution)[:\s]*(.*?)(?=(شرح|Explanation|$))', dotAll: true).firstMatch(block);
+        final explanationMatch = RegExp(r'(شرح|Explanation)[:\s]*(.*)', dotAll: true).firstMatch(block);
+
+        if (questionMatch != null) {
           solutions.add(QuestionSolution(
-            question: currentQuestion,
-            solution: currentSolution,
-            explanation: currentExplanation,
+            question: questionMatch.group(0)?.trim() ?? 'سؤال',
+            solution: solutionMatch?.group(2)?.trim() ?? '',
+            explanation: explanationMatch?.group(2)?.trim() ?? '',
           ));
         }
-        currentQuestion = trimmedLine;
-        currentSolution = '';
-        currentExplanation = '';
       }
-      // اكتشاف قسم الحل
-      else if (trimmedLine.contains(RegExp(r'^(الحل|Solution|الإجابة|Answer)'))) {
-        currentSolution += trimmedLine + '\n';
-      }
-      // اكتشاف قسم الشرح
-      else if (trimmedLine.contains(RegExp(r'^(شرح|Explanation|توضيح|ملاحظة)'))) {
-        currentExplanation += trimmedLine + '\n';
-      }
-      // إضافة إلى الحل الحالي
-      else if (currentQuestion.isNotEmpty) {
-        if (currentSolution.length < currentExplanation.length) {
-          currentSolution += trimmedLine + '\n';
-        } else {
-          currentExplanation += trimmedLine + '\n';
-        }
-      }
-    }
-
-    // إضافة السؤال الأخير
-    if (currentQuestion.isNotEmpty) {
+    } catch (e) {
+      // fallback
       solutions.add(QuestionSolution(
-        question: currentQuestion,
-        solution: currentSolution,
-        explanation: currentExplanation,
-      ));
-    }
-
-    // إذا لم نتمكن من تحليل الهيكل، ننشئ حل واحد شامل
-    if (solutions.isEmpty) {
-      solutions.add(QuestionSolution(
-        question: 'حل الواجب',
+        question: 'تحليل الواجب',
         solution: responseText,
-        explanation: 'تم تحليل الواجب وإيجاد الحلول المناسبة',
+        explanation: 'تم تحليل المحتوى بنجاح',
       ));
     }
 
-    setState(() {
-      _solutions = solutions;
-    });
+    setState(() => _solutions = solutions);
   }
 
   void _clearAll() {
@@ -582,101 +552,101 @@ class _HomeworkSolverScreenState extends State<HomeworkSolverScreen>
             ? Container()
             : _isProcessing
             ? ScaleTransition(
-                scale: _scaleAnimation,
-                child: Container(
-                  width: double.infinity,
-                  padding: EdgeInsets.all(24.w),
-                  decoration: BoxDecoration(
-                    color: cardColor,
-                    borderRadius: BorderRadius.circular(20.r),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.08),
-                        blurRadius: 15.r,
-                        offset: const Offset(0, 5),
+          scale: _scaleAnimation,
+          child: Container(
+            width: double.infinity,
+            padding: EdgeInsets.all(24.w),
+            decoration: BoxDecoration(
+              color: cardColor,
+              borderRadius: BorderRadius.circular(20.r),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.08),
+                  blurRadius: 15.r,
+                  offset: const Offset(0, 5),
+                ),
+              ],
+            ),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    SizedBox(
+                      width: 22.w,
+                      height: 22.h,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.5,
+                        valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
                       ),
-                    ],
-                  ),
-                  child: Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          SizedBox(
-                            width: 22.w,
-                            height: 22.h,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2.5,
-                              valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
-                            ),
-                          ),
-                          SizedBox(width: 16.w),
-                          Text(
-                            'جاري حل الواجب...',
-                            style: TextStyle(
-                              fontSize: 16.sp,
-                              color: textPrimary,
-                              fontWeight: FontWeight.w600,
-                              fontFamily: 'Tajawal',
-                            ),
-                          ),
-                        ],
+                    ),
+                    SizedBox(width: 16.w),
+                    Text(
+                      'جاري حل الواجب...',
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        color: textPrimary,
+                        fontWeight: FontWeight.w600,
+                        fontFamily: 'Tajawal',
                       ),
-                      SizedBox(height: 12.h),
-                      Text(
-                        'قد تستغرق العملية بضع ثوانٍ',
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          color: textSecondary,
-                          fontFamily: 'Tajawal',
-                        ),
-                      ),
-                    ],
+                    ),
+                  ],
+                ),
+                SizedBox(height: 12.h),
+                Text(
+                  'قد تستغرق العملية بضع ثوانٍ',
+                  style: TextStyle(
+                    fontSize: 12.sp,
+                    color: textSecondary,
+                    fontFamily: 'Tajawal',
                   ),
                 ),
-              )
+              ],
+            ),
+          ),
+        )
             : Material(
-                color: _hasSolution ? successColor : primaryColor,
+          color: _hasSolution ? successColor : primaryColor,
+          borderRadius: BorderRadius.circular(16.r),
+          child: InkWell(
+            onTap: _solveHomework,
+            borderRadius: BorderRadius.circular(16.r),
+            child: Container(
+              width: double.infinity,
+              padding: EdgeInsets.symmetric(vertical: 18.h, horizontal: 24.w),
+              decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16.r),
-                child: InkWell(
-                  onTap: _solveHomework,
-                  borderRadius: BorderRadius.circular(16.r),
-                  child: Container(
-                    width: double.infinity,
-                    padding: EdgeInsets.symmetric(vertical: 18.h, horizontal: 24.w),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16.r),
-                      boxShadow: [
-                        BoxShadow(
-                          color: (_hasSolution ? successColor : primaryColor).withOpacity(0.3),
-                          blurRadius: 15.r,
-                          offset: const Offset(0, 6),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          _hasSolution ? Icons.check_circle : Icons.auto_awesome,
-                          size: 22.w,
-                          color: Colors.white,
-                        ),
-                        SizedBox(width: 12.w),
-                        Text(
-                          _hasSolution ? 'تم حل الواجب بنجاح' : 'حل الواجب بالذكاء الاصطناعي',
-                          style: TextStyle(
-                            fontSize: 16.sp,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                            fontFamily: 'Tajawal',
-                          ),
-                        ),
-                      ],
+                boxShadow: [
+                  BoxShadow(
+                    color: (_hasSolution ? successColor : primaryColor).withOpacity(0.3),
+                    blurRadius: 15.r,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    _hasSolution ? Icons.check_circle : Icons.auto_awesome,
+                    size: 22.w,
+                    color: Colors.white,
+                  ),
+                  SizedBox(width: 12.w),
+                  Text(
+                    _hasSolution ? 'تم حل الواجب بنجاح' : 'حل الواجب بالذكاء الاصطناعي',
+                    style: TextStyle(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      fontFamily: 'Tajawal',
                     ),
                   ),
-                ),
+                ],
               ),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -1023,13 +993,13 @@ class QuestionSolution {
 }
 
 class GeminiService {
-  static const String _apiKey = 'AIzaSyAB7gcV6_BmdCBQ5X_8PIE7t6l-ytQrxvQ'; // استبدل بمفتاحك الحقيقي
+  static const String _apiKey = 'AIzaSyASShc1a3f3qrwr0Icnpb5Jzqo_-9tdMBw'; // استبدل بمفتاحك الحقيقي
 
   static Future<String> solveHomework(File image) async {
     try {
       // تهيئة نموذج Gemini
       final model = GenerativeModel(
-        model: 'gemini-pro-vision',
+        model: 'gemini-2.0-flash',
         apiKey: _apiKey,
       );
 
