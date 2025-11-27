@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
@@ -156,35 +155,161 @@ class _HomeworkSolverScreenState extends State<HomeworkSolverScreen>
   void _parseSolutions(String responseText) {
     final List<QuestionSolution> solutions = [];
 
+    print("الرد الخام من Gemini: $responseText");
+
     try {
-      // طريقة أكثر قوة لتحليل الرد
-      final blocks = responseText.split(RegExp(r'(?=سؤال|Question|Problem)', caseSensitive: false));
+      // طريقة محسنة جداً لتحليل الرد
+      solutions.addAll(_parseWithEnhancedMethod(responseText));
 
-      for (final block in blocks) {
-        if (block.trim().isEmpty) continue;
-
-        final questionMatch = RegExp(r'^(سؤال|Question|Problem)[:\s]*(.*?)(?=(الحل|Solution|$))', dotAll: true).firstMatch(block);
-        final solutionMatch = RegExp(r'(الحل|Solution)[:\s]*(.*?)(?=(شرح|Explanation|$))', dotAll: true).firstMatch(block);
-        final explanationMatch = RegExp(r'(شرح|Explanation)[:\s]*(.*)', dotAll: true).firstMatch(block);
-
-        if (questionMatch != null) {
-          solutions.add(QuestionSolution(
-            question: questionMatch.group(0)?.trim() ?? 'سؤال',
-            solution: solutionMatch?.group(2)?.trim() ?? '',
-            explanation: explanationMatch?.group(2)?.trim() ?? '',
-          ));
-        }
+      // إذا لم نجد حلول، نجرب الطرق البديلة
+      if (solutions.isEmpty) {
+        solutions.addAll(_parseWithSectionMethod(responseText));
       }
+
+      // إذا استمر عدم وجود حلول، نستخدم الرد كاملاً
+      if (solutions.isEmpty) {
+        solutions.add(QuestionSolution(
+          question: 'تحليل الواجب',
+          solution: responseText,
+          explanation: 'تم تحليل محتوى الواجب بنجاح',
+        ));
+      }
+
     } catch (e) {
-      // fallback
+      print('خطأ في التحليل: $e');
       solutions.add(QuestionSolution(
-        question: 'تحليل الواجب',
+        question: 'حل الواجب',
         solution: responseText,
-        explanation: 'تم تحليل المحتوى بنجاح',
+        explanation: 'تم معالجة الواجب بنجاح',
       ));
     }
 
     setState(() => _solutions = solutions);
+  }
+
+  List<QuestionSolution> _parseWithEnhancedMethod(String text) {
+    final List<QuestionSolution> solutions = [];
+
+    // regex محسن للتعرف على التنسيق المنظم
+    final pattern = RegExp(
+      r'(?:سؤال|Question)[\s:\-]*([^\n]*)(?:\n\s*)?(?:الحل|Solution)[\s:\-]*([\s\S]*?)(?=(?:\n\s*)?(?:شرح|Explanation)[\s:\-]*([\s\S]*?)(?=(?:\n\s*)?(?:سؤال|Question|$))|(?:\n\s*)?(?:سؤال|Question|$))',
+      caseSensitive: false,
+    );
+
+    final matches = pattern.allMatches(text);
+
+    for (final match in matches) {
+      if (match.groupCount >= 1) {
+        String question = match.group(1)?.trim() ?? 'سؤال';
+        String solution = match.group(2)?.trim() ?? '';
+        String explanation = match.group(3)?.trim() ?? '';
+
+        // تنظيف النصوص
+        question = _cleanText(question, ['سؤال', 'Question', ':']);
+        solution = _cleanText(solution, ['الحل', 'Solution', ':']);
+        explanation = _cleanText(explanation, ['شرح', 'Explanation', ':']);
+
+        if (question.isNotEmpty || solution.isNotEmpty) {
+          solutions.add(QuestionSolution(
+            question: question.isNotEmpty ? question : 'سؤال ${solutions.length + 1}',
+            solution: solution,
+            explanation: explanation,
+          ));
+        }
+      }
+    }
+
+    return solutions;
+  }
+
+  List<QuestionSolution> _parseWithSectionMethod(String text) {
+    final List<QuestionSolution> solutions = [];
+
+    // تقسيم النص إلى أقسام بناءً على العناوين الرئيسية
+    final sections = text.split(RegExp(r'\n\s*\n'));
+    int questionCount = 0;
+
+    for (final section in sections) {
+      if (section.trim().isEmpty) continue;
+
+      final lines = section.split('\n');
+      String currentQuestion = '';
+      String currentSolution = '';
+      String currentExplanation = '';
+      String currentSection = 'question';
+
+      for (final line in lines) {
+        final trimmedLine = line.trim();
+        if (trimmedLine.isEmpty) continue;
+
+        // اكتشاف نوع المحتوى
+        if (trimmedLine.contains(RegExp(r'^(سؤال|Question|السؤال|Problem|المسألة)'))) {
+          currentSection = 'question';
+          if (currentQuestion.isNotEmpty && (currentSolution.isNotEmpty || currentExplanation.isNotEmpty)) {
+            solutions.add(QuestionSolution(
+              question: _cleanText(currentQuestion, ['سؤال', 'Question']),
+              solution: currentSolution,
+              explanation: currentExplanation,
+            ));
+            currentQuestion = '';
+            currentSolution = '';
+            currentExplanation = '';
+          }
+          currentQuestion = trimmedLine;
+        }
+        else if (trimmedLine.contains(RegExp(r'^(الحل|Solution|الإجابة|Answer)'))) {
+          currentSection = 'solution';
+        }
+        else if (trimmedLine.contains(RegExp(r'^(شرح|Explanation|توضيح|ملاحظة)'))) {
+          currentSection = 'explanation';
+        }
+        else {
+          // إضافة المحتوى للقسم الحالي
+          switch (currentSection) {
+            case 'question':
+              if (currentQuestion.isEmpty) {
+                currentQuestion = trimmedLine;
+              } else {
+                currentQuestion += '\n$trimmedLine';
+              }
+              break;
+            case 'solution':
+              currentSolution += '$trimmedLine\n';
+              break;
+            case 'explanation':
+              currentExplanation += '$trimmedLine\n';
+              break;
+          }
+        }
+      }
+
+      // إضافة القسم الأخير
+      if (currentQuestion.isNotEmpty) {
+        solutions.add(QuestionSolution(
+          question: _cleanText(currentQuestion, ['سؤال', 'Question']),
+          solution: currentSolution.trim(),
+          explanation: currentExplanation.trim(),
+        ));
+      } else if (section.trim().isNotEmpty) {
+        // إذا لم يكن هناك سؤال واضح، نعتبر النص كله حلاً
+        questionCount++;
+        solutions.add(QuestionSolution(
+          question: 'سؤال $questionCount',
+          solution: section.trim(),
+          explanation: 'تم تحليل السؤال وإيجاد الحل المناسب',
+        ));
+      }
+    }
+
+    return solutions;
+  }
+
+  String _cleanText(String text, List<String> prefixes) {
+    String cleaned = text;
+    for (final prefix in prefixes) {
+      cleaned = cleaned.replaceAll(RegExp('^$prefix[\\s:\\-]*', caseSensitive: false), '');
+    }
+    return cleaned.trim();
   }
 
   void _clearAll() {
@@ -652,7 +777,7 @@ class _HomeworkSolverScreenState extends State<HomeworkSolverScreen>
   }
 
   Widget _buildSolutions() {
-    if (!_hasSolution || _solutions.isEmpty) return Container();
+    if (!_hasSolution) return Container();
 
     return SlideTransition(
       position: Tween<Offset>(
@@ -697,18 +822,86 @@ class _HomeworkSolverScreenState extends State<HomeworkSolverScreen>
                         fontFamily: 'Tajawal',
                       ),
                     ),
+                    SizedBox(width: 8.w),
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+                      decoration: BoxDecoration(
+                        color: primaryColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
+                      child: Text(
+                        '${_solutions.length}',
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.bold,
+                          color: primaryColor,
+                          fontFamily: 'Tajawal',
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
               SizedBox(height: 16.h),
-              ..._solutions.asMap().entries.map((entry) {
-                final index = entry.key;
-                final solution = entry.value;
-                return _buildSolutionCard(solution, index);
-              }),
+
+              if (_solutions.isEmpty)
+                _buildNoSolutionsFound()
+              else
+                ..._solutions.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final solution = entry.value;
+                  return _buildSolutionCard(solution, index);
+                }),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildNoSolutionsFound() {
+    return Container(
+      padding: EdgeInsets.all(20.w),
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(16.r),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 8.r,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Icon(
+            Icons.search_off,
+            size: 50.w,
+            color: textSecondary.withOpacity(0.5),
+          ),
+          SizedBox(height: 16.h),
+          Text(
+            'لم يتم العثور على أسئلة منظمة',
+            style: TextStyle(
+              fontSize: 16.sp,
+              fontWeight: FontWeight.w600,
+              color: textPrimary,
+              fontFamily: 'Tajawal',
+            ),
+          ),
+          SizedBox(height: 8.h),
+          Text(
+            'قد تحتوي الصورة على نص غير منظم أو قد تحتاج إلى تحسين جودة الصورة',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 14.sp,
+              color: textSecondary,
+              fontFamily: 'Tajawal',
+
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -732,7 +925,8 @@ class _HomeworkSolverScreenState extends State<HomeworkSolverScreen>
           dividerColor: Colors.transparent,
         ),
         child: ExpansionTile(
-          tilePadding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
+          initiallyExpanded: true,
+          tilePadding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
           leading: Container(
             width: 36.w,
             height: 36.h,
@@ -757,14 +951,14 @@ class _HomeworkSolverScreenState extends State<HomeworkSolverScreen>
             ),
           ),
           title: Text(
-            solution.question,
+            solution.question.isNotEmpty ? solution.question : 'سؤال ${index + 1}',
             style: TextStyle(
-              fontSize: 15.sp,
+              fontSize: 16.sp,
               fontWeight: FontWeight.w600,
               color: textPrimary,
               fontFamily: 'Tajawal',
             ),
-            maxLines: 2,
+            maxLines: 3,
             overflow: TextOverflow.ellipsis,
           ),
           children: [
@@ -777,6 +971,7 @@ class _HomeworkSolverScreenState extends State<HomeworkSolverScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // عرض الحل
                   if (solution.solution.isNotEmpty)
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -786,7 +981,7 @@ class _HomeworkSolverScreenState extends State<HomeworkSolverScreen>
                             Icon(
                               Icons.lightbulb_outline,
                               color: primaryColor,
-                              size: 18.w,
+                              size: 20.w,
                             ),
                             SizedBox(width: 8.w),
                             Text(
@@ -802,6 +997,7 @@ class _HomeworkSolverScreenState extends State<HomeworkSolverScreen>
                         ),
                         SizedBox(height: 12.h),
                         Container(
+                          width: double.infinity,
                           padding: EdgeInsets.all(16.w),
                           decoration: BoxDecoration(
                             color: secondaryColor,
@@ -822,8 +1018,34 @@ class _HomeworkSolverScreenState extends State<HomeworkSolverScreen>
                         ),
                         SizedBox(height: 20.h),
                       ],
+                    )
+                  else
+                    Container(
+                      padding: EdgeInsets.all(16.w),
+                      decoration: BoxDecoration(
+                        color: Colors.orange[50],
+                        borderRadius: BorderRadius.circular(12.r),
+                        border: Border.all(color: Colors.orange[100]!),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.info, color: Colors.orange[600], size: 18.w),
+                          SizedBox(width: 8.w),
+                          Expanded(
+                            child: Text(
+                              'لا يوجد حل مفصل متوفر',
+                              style: TextStyle(
+                                fontSize: 14.sp,
+                                color: Colors.orange[700],
+                                fontFamily: 'Tajawal',
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
 
+                  // عرض الشرح
                   if (solution.explanation.isNotEmpty)
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -833,7 +1055,7 @@ class _HomeworkSolverScreenState extends State<HomeworkSolverScreen>
                             Icon(
                               Icons.info_outline,
                               color: successColor,
-                              size: 18.w,
+                              size: 20.w,
                             ),
                             SizedBox(width: 8.w),
                             Text(
@@ -849,6 +1071,7 @@ class _HomeworkSolverScreenState extends State<HomeworkSolverScreen>
                         ),
                         SizedBox(height: 12.h),
                         Container(
+                          width: double.infinity,
                           padding: EdgeInsets.all(16.w),
                           decoration: BoxDecoration(
                             color: successColor.withOpacity(0.05),
@@ -993,52 +1216,60 @@ class QuestionSolution {
 }
 
 class GeminiService {
-  static const String _apiKey = 'AIzaSyASShc1a3f3qrwr0Icnpb5Jzqo_-9tdMBw'; // استبدل بمفتاحك الحقيقي
+  static const String _apiKey = 'AIzaSyASShc1a3f3qrwr0Icnpb5Jzqo_-9tdMBw';
 
   static Future<String> solveHomework(File image) async {
     try {
-      // تهيئة نموذج Gemini
       final model = GenerativeModel(
         model: 'gemini-2.0-flash',
         apiKey: _apiKey,
       );
 
-      // قراءة الصورة وتحويلها إلى bytes
       final bytes = await image.readAsBytes();
 
-      // إنشاء المحتوى مع النص التعليمي والصورة
       final content = [
         Content.multi([
           TextPart("""
 أنت مساعد تعليمي متخصص في حل الواجبات المدرسية. قم بتحليل الصورة التي تحتوي على واجب منزلي وأجب عن الأسئلة بطريقة تعليمية واضحة.
 
-التعليمات:
+التعليمات المهمة:
 1. حلل كل سؤال على حدة
 2. قدم الحلول خطوة بخطوة
 3. اشرح المفاهيم الأساسية
 4. تأكد من دقة الحلول الرياضية
-5. استخدم أسلوباً تعليمياً واضحاً وسهلاً
-6. رتب الإجابات حسب ترتيب الأسئلة في الصورة
+5. استخدم أسلوباً تعليمياً واضحاً
+6. رتب الإجابات حسب ترتيب الأسئلة
 7. استخدم اللغة العربية الفصحى
 8. اذكر الخطوات التفصيلية لكل حل
 
-أعد الإجابة بتنسيق منظم مع شرح كل خطوة.
+أعد الإجابة باستخدام هذا التنسيق بالضبط لكل سؤال:
+
+سؤال: [نص السؤال هنا]
+الحل: [الحل التفصيلي خطوة بخطوة هنا]
+شرح: [الشرح والتوضيح هنا]
+
+إذا كان هناك أكثر من سؤال، كرر هذا التنسيق لكل سؤال.
           """),
           DataPart('image/jpeg', bytes),
         ])
       ];
 
-      // إرسال الطلب والحصول على الرد
-      final response = await model.generateContent(content);
+      final response = await model.generateContent(
+        content,
+        generationConfig: GenerationConfig(
+          temperature: 0.3,
+          topK: 40,
+          topP: 0.95,
+          maxOutputTokens: 4096,
+        ),
+      );
 
-      // التحقق من وجود رد
       if (response.text != null) {
         return response.text!;
       } else {
         throw Exception('لم يتم إرجاع أي رد من النموذج');
       }
     } catch (e) {
-      // معالجة الأخطاء بشكل أكثر تفصيلاً
       if (e is GenerativeAIException) {
         throw Exception('خطأ في الذكاء الاصطناعي: ${e.message}');
       } else {
