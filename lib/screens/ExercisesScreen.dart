@@ -1216,7 +1216,7 @@ class QuestionSolution {
 }
 
 class GeminiService {
-  static const String _apiKey = 'AIzaSyASShc1a3f3qrwr0Icnpb5Jzqo_-9tdMBw';
+  static const apiKey = process.env.GOOGLE_API_KEY;;
 
   static Future<String> solveHomework(File image) async {
     try {
