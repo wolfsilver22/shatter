@@ -1900,9 +1900,9 @@ class _MainNavigationState extends State<MainNavigation> {
                         index: 0,
                       ),
                       _buildNavItem(
-                        icon: Iconsax.activity,
-                        activeIcon: Iconsax.activity,
-                        label: 'النشاطات',
+                        icon: Iconsax.camera,
+                        activeIcon: Iconsax.camera,
+                        label: 'الماسح',
                         index: 1,
                       ),
                       _buildNavItem(
