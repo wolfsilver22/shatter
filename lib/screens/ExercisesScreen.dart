@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
@@ -476,31 +477,31 @@ class _HomeworkSolverScreenState extends State<HomeworkSolverScreen>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Container(
-                width: 80.w,
-                height: 80.h,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [primaryColor, primaryColor.withOpacity(0.8)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: primaryColor.withOpacity(0.3),
-                      blurRadius: 15.r,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Icon(
-                  Icons.auto_awesome,
-                  color: Colors.white,
-                  size: 40.w,
-                ),
-              ),
-              SizedBox(height: 16.h),
+              // Container(
+              //   width: 80.w,
+              //   height: 80.h,
+              //   decoration: BoxDecoration(
+              //     gradient: LinearGradient(
+              //       colors: [primaryColor, primaryColor.withOpacity(0.8)],
+              //       begin: Alignment.topLeft,
+              //       end: Alignment.bottomRight,
+              //     ),
+              //     shape: BoxShape.circle,
+              //     boxShadow: [
+              //       BoxShadow(
+              //         color: primaryColor.withOpacity(0.3),
+              //         blurRadius: 15.r,
+              //         offset: const Offset(0, 4),
+              //       ),
+              //     ],
+              //   ),
+              //   child: Icon(
+              //     Icons.auto_awesome,
+              //     color: Colors.white,
+              //     size: 40.w,
+              //   ),
+              // ),
+              SizedBox(height: 8.h),
               Text(
                 'حل الواجبات بالذكاء الاصطناعي',
                 style: TextStyle(
@@ -513,16 +514,16 @@ class _HomeworkSolverScreenState extends State<HomeworkSolverScreen>
                 textAlign: TextAlign.center,
               ),
               SizedBox(height: 8.h),
-              Text(
-                'التقط صورة للواجب واحصل على الحل فوراً\nباستخدام أحدث تقنيات الذكاء الاصطناعي',
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  color: textSecondary,
-                  fontFamily: 'Tajawal',
-                  height: 1.5,
-                ),
-                textAlign: TextAlign.center,
-              ),
+              // Text(
+              //   'التقط صورة للواجب واحصل على الحل فوراً\nباستخدام أحدث تقنيات الذكاء الاصطناعي',
+              //   style: TextStyle(
+              //     fontSize: 14.sp,
+              //     color: textSecondary,
+              //     fontFamily: 'Tajawal',
+              //     height: 1.5,
+              //   ),
+              //   textAlign: TextAlign.center,
+              // ),
             ],
           ),
         ),
@@ -1442,3 +1443,4 @@ class GeminiService {
     }
   }
 }
+
